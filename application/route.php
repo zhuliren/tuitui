@@ -21,5 +21,8 @@
 //];
 use think\Route;
 //Route::rule('路由表达式','路由地址','请求类型','路由参数（数组）','变量规则（数组）');
-Route::rule('user','index/User/user');
+Route::rule('userRegister','index/User/userRegister');
+Route::rule('userLogin','index/User/userLogin');
+
 Route::rule('proList','index/Pro/proList');
+Route::rule('proDetails','index/Pro/proDetails');
