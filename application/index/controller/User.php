@@ -9,6 +9,7 @@
 namespace app\index\controller;
 
 
+use app\index\model\UserModel;
 use think\Db;
 
 class user
@@ -36,7 +37,7 @@ class user
             $userdetails = Db::query('SELECT * FROM xm_tbl_user WHERE wechat_open_id = ?', [$openid]);
             if (count($userdetails) == 0) {
                 //无用户信息，插入用户信息
-                $userdata = ['wechat_open_id' => $openid, 'created_time' => date("Y-m-d H:i:s" ,time())];
+                $userdata = ['wechat_open_id' => $openid, 'created_time' => date("Y-m-d H:i:s", time())];
                 $user_id = Db::table('xm_tbl_user')->insertGetId($userdata);
                 $returndata = array('user_id' => $user_id, 'openid' => $openid, 'user_type' => '0', 'user_type_msg' => '普通用户');
                 $data = array('status' => 0, 'msg' => '登录成功', 'data' => $returndata);
@@ -64,16 +65,59 @@ class user
         } else if ($output['errcode'] == -1) {
             $data = array('status' => 1, 'msg' => '微信系统繁忙稍后再试', 'data' => '');
             return json($data);
-        }else if ($output['errcode'] == 40163) {
+        } else if ($output['errcode'] == 40163) {
             $data = array('status' => 1, 'msg' => 'code已经被使用了', 'data' => '');
             return json($data);
         }
     }
 
-    public
-    function userInfoSet()
+    public function userInfoSet()
     {
+        $code = 'test';
+        $isBeCode = Db::table('xm_tbl_user')->where('user_code', $code)->find();
+        if ($isBeCode != null) {
+            return 1;
+        } else {
+            return 2;
+        }
+    }
 
-        return date("Y-m-d H:i:s" ,time());
+    public function userUpCodeSet()
+    {
+        $user_id = $_REQUEST['userid'];
+        $upcode = $_REQUEST['upcode'];
+        //查询用户是否存在
+        $selectuser = Db::table('xm_tbl_user')->where('id', $user_id)->find();
+        if (isset($selectuser)) {
+            //检查是否已经绑定过了
+            $selectcode = Db::table('xm_tbl_user')->where('id', $user_id)->value('user_code');
+            if (isset($selectcode)) {
+                $data = array('status' => 1, 'msg' => '已绑定邀请码', 'data' => '');
+                return json($data);
+            } else {
+                //检查upcode是否存在
+                $selectupcode = Db::table('xm_tbl_user')->where('user_code', $upcode)->find();
+                if (isset($selectupcode)) {
+                    //生成邀请码
+                    $userModel = new UserModel();
+                    do {
+                        //生成邀请码
+                        $code = $userModel->generateCode();
+                        $isBeCode = Db::table('xm_tbl_user')->where('user_code', $code)->find();
+                        //判断邀请码是否重复
+                    } while ($isBeCode != null);
+                    //插入邀请码
+                    Db::table('xm_tbl_user')->where('id', $user_id)->update(['up_code' => $upcode, 'user_code' => $code]);
+                    $data = array('status' => 0, 'msg' => '绑定成功', 'data' => '');
+                    return json($data);
+                } else {
+                    $data = array('status' => 1, 'msg' => '邀请码错误', 'data' => '');
+                    return json($data);
+                }
+            }
+        } else {
+            $data = array('status' => 1, 'msg' => '用户不存在', 'data' => '');
+            return json($data);
+        }
     }
 }
