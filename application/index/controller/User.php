@@ -73,12 +73,8 @@ class user
 
     public function userInfoSet()
     {
-        $selectcardhistory = db('xm_tbl_pro_card_history')->where('last_user_id',1)->find();
-        if($selectcardhistory){
-            return 1;
-        }else{
-            return 2;
-        }
+        $order_id = date('Ymd') . substr(implode(NULL, array_map('ord', str_split(substr(uniqid(), 7, 13), 1))), 0, 8);
+        return $order_id;
     }
 
     public function userUpCodeSet()

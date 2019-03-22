@@ -16,7 +16,7 @@ class ProModel extends Model
 {
     public function proStateSel($pro_id)
     {
-        $pro_stage_sel = Db::table('xm_tbl_pro')->where('id', $pro_id)->value('prostate');
+        $pro_stage_sel = Db::table('xm_tbl_pro')->where('id', $pro_id)->value('pro_state');
         switch ($pro_stage_sel) {
             case 1:
                 return 1;

@@ -29,3 +29,5 @@ Route::rule('proList','index/Pro/proList');
 Route::rule('proDetails','index/Pro/proDetails');
 
 Route::rule('proCardDetails','index/ProCard/proCardDetails');
+
+Route::rule('generateOrder','index/Order/generateOrder');
