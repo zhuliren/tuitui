@@ -64,9 +64,10 @@ LEFT JOIN xm_tbl_pro_finance c ON a.`id` = c.`pro_id` where a.id= ? ', [$pro_id]
             $pro_cardsellinfo = array();
         } else {
             //被邀请用户
-            $pro_cardinfo = Db::table('xm_tbl_pro_cardstage')->where('pro_id', $pro_id)->find();
+            $pro_cardinfo = Db::table('xm_tbl_pro_cardstage')->where('pro_id', $pro_id)->order('card_stage desc')->find();
             $pro_card_surplus = $pro_cardinfo['agentcard_num'] - $pro_cardinfo['agentcard_used'];
-            $pro_cardsellinfo = array('pro_card_price' => $pro_cardinfo['card_price'], 'pro_card_surplus' => $pro_card_surplus);
+            $pro_card_id = $pro_cardinfo['id'];
+            $pro_cardsellinfo = array('pro_card_price' => $pro_cardinfo['card_price'], 'pro_card_surplus' => $pro_card_surplus,'pro_card_id'=>$pro_card_id);
         }
         $prodetails = array('pro_yetdata' => $pro_yesterday_datadetails, 'pro_baseinfo' => $pro_info, 'pro_cardsellinfo' => $pro_cardsellinfo);
         $returndata = array('status' => 0, 'msg' => '成功', 'data' => $prodetails);

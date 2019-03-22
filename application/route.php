@@ -27,3 +27,5 @@ Route::rule('userUpCodeSet','index/User/userUpCodeSet');
 
 Route::rule('proList','index/Pro/proList');
 Route::rule('proDetails','index/Pro/proDetails');
+
+Route::rule('proCardDetails','index/ProCard/proCardDetails');

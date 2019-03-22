@@ -73,11 +73,10 @@ class user
 
     public function userInfoSet()
     {
-        $code = 'test';
-        $isBeCode = Db::table('xm_tbl_user')->where('user_code', $code)->find();
-        if ($isBeCode != null) {
+        $selectcardhistory = db('xm_tbl_pro_card_history')->where('last_user_id',1)->find();
+        if($selectcardhistory){
             return 1;
-        } else {
+        }else{
             return 2;
         }
     }
