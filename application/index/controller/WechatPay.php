@@ -28,10 +28,10 @@ class WechatPay
         $total_fee = $order_price;//标价金额
         $spbill_create_ip = '192.168.1.154';//终端IP
         $notify_url = 'https://tango007.heeyhome.com/test';//通知地址
-        $trade_type='JSAPI';//交易类型
+        $trade_type = 'JSAPI';//交易类型
 
-        $sign_string =
+        $sign_string = '1';
 
-        $sign;//签名
+//        $sign;//签名
     }
 }

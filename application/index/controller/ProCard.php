@@ -52,4 +52,42 @@ class ProCard
         $data = array('status' => 0, 'msg' => 'test', 'data' => $returndata);
         return json($data);
     }
+
+    public function myCardList()
+    {
+        $user_id = $_REQUEST['userid'];
+        $userModel = new UserModel();
+        $user_type = $userModel->userIdentity($user_id);
+        switch ($user_type) {
+            case -1:
+                $data = array('status' => 1, 'msg' => '用户不存在', 'data' => '');
+                return json($data);
+            case 0:
+                $data = array('status' => 1, 'msg' => '无权限查看', 'data' => '');
+                return json($data);
+            case 1:
+                break;
+            case 2:
+                break;
+        }
+        $mycardlist = array();
+        $pro_num = 0;
+        //分组查询，先查询项目类型
+        $selectprotype = db('xm_tbl_pro_card')->field('pro_id,count(id)')->where('user_id', $user_id)->group('pro_id')->select();
+        if ($selectprotype) {
+            foreach ($selectprotype as $eachprocard) {
+                $pro_num++;
+                //数据绑定
+                $selectproname = db('xm_tbl_pro')->where('id', $eachprocard['pro_id'])->find();
+                $procarddetails = array('card_name' => $selectproname['pro_name'], 'card_num' => $eachprocard['count(id)']);
+                $mycardlist = array_merge($mycardlist, $procarddetails);
+            }
+            $returndata = array('pro_num' => $pro_num, 'pro_card_details' => $mycardlist);
+            $data = array('status' => 0, 'msg' => '成功', 'data' => $returndata);
+            return json($data);
+        } else {
+            $data = array('status' => 1, 'msg' => '当前无代理权', 'data' => '');
+            return json($data);
+        }
+    }
 }

@@ -24,10 +24,17 @@ use think\Route;
 Route::rule('userRegister','index/User/userRegister');
 Route::rule('userInfoSet','index/User/userInfoSet');
 Route::rule('userUpCodeSet','index/User/userUpCodeSet');
+Route::rule('userPwdSet','index/User/userPwdSet');
+Route::rule('userPwdChange','index/User/userPwdChange');
+
+Route::rule('userBankInfo','index/User/userBankInfo');
+Route::rule('userBankSet','index/User/userBankSet');
+Route::rule('userBankChange','index/User/userBankChange');
 
 Route::rule('proList','index/Pro/proList');
 Route::rule('proDetails','index/Pro/proDetails');
 
 Route::rule('proCardDetails','index/ProCard/proCardDetails');
+Route::rule('myCardList','index/ProCard/myCardList');
 
 Route::rule('generateOrder','index/Order/generateOrder');

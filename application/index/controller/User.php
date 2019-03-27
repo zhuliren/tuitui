@@ -52,7 +52,12 @@ class user
                     $user_type_msg = '被邀请用户';
                     $user_type = '1';
                 }
-                $returndata = array('user_id' => $userdetails['id'], 'openid' => $openid, 'user_type' => $user_type, 'user_type_msg' => $user_type_msg);
+                if ($userdetails['user_pwd'] == null) {
+                    $user_pwd_type = 0;
+                } else {
+                    $user_pwd_type = 1;
+                }
+                $returndata = array('user_id' => $userdetails['id'], 'openid' => $openid, 'user_type' => $user_type, 'user_type_msg' => $user_type_msg, 'user_pwd_type' => $user_pwd_type);
                 $data = array('status' => 0, 'msg' => '登录成功', 'data' => $returndata);
                 return json($data);
             }
@@ -115,4 +120,118 @@ class user
             return json($data);
         }
     }
+
+    public function userPwdSet()
+    {
+        $user_id = $_REQUEST['userid'];
+        $user_pwd = md5($_REQUEST['userpwd']);
+        //查询用户是否已设置密码
+        $selectuserpwd = Db::table('xm_tbl_user')->where('id', $user_id)->value('user_pwd');
+        if ($selectuserpwd) {
+            $data = array('status' => 1, 'msg' => '已设置过密码', 'data' => '');
+            return json($data);
+        } else {
+            Db::table('xm_tbl_user')->where('id', $user_id)->update(['user_pwd' => $user_pwd]);
+            $data = array('status' => 0, 'msg' => '设置成功', 'data' => '');
+            return json($data);
+        }
+    }
+
+    public function userPwdChange()
+    {
+        $user_id = $_REQUEST['userid'];
+        $old_user_pwd = md5($_REQUEST['olduserpwd']);
+        $new_user_pwd = md5($_REQUEST['newuserpwd']);
+        //查询用户旧密码是否正确
+        $selectuserpwd = Db::table('xm_tbl_user')->where('id', $user_id)->where('user_pwd', $old_user_pwd)->value('user_pwd');
+        if ($selectuserpwd) {
+            Db::table('xm_tbl_user')->where('id', $user_id)->update(['user_pwd' => $new_user_pwd]);
+            $data = array('status' => 0, 'msg' => '设置成功', 'data' => '');
+            return json($data);
+        } else {
+            $data = array('status' => 1, 'msg' => '密码错误', 'data' => '');
+            return json($data);
+        }
+    }
+
+    public function userBankInfo()
+    {
+        $user_id = $_REQUEST['userid'];
+        //查询用户是否存在
+        $selectuser = Db::table('xm_tbl_user')->where('id', $user_id)->find();
+        if (isset($selectuser)) {
+            //查询用户是否已绑定银行卡
+            $selectuserbankcard = Db::table('xm_tbl_user')->where('id', $user_id)->find();
+            if (isset($selectuserbankcard['bank_id'])) {
+                $bankdata = array('bank_id' => $selectuserbankcard['bank_id'], 'bank_name' => $selectuserbankcard['bank_name']);
+                $data = array('status' => 0, 'msg' => '已绑定银行卡', 'data' => $bankdata);
+                return json($data);
+            } else {
+                $data = array('status' => 1, 'msg' => '未绑定银行卡', 'data' => '');
+                return json($data);
+            }
+        } else {
+            $data = array('status' => 1, 'msg' => '用户不存在', 'data' => '');
+            return json($data);
+        }
+    }
+
+    public function userBankSet()
+    {
+        $user_id = $_REQUEST['userid'];
+        $bank_id = $_REQUEST['bankid'];
+        $bank_name = $_REQUEST['bankname'];
+        $user_pwd = md5($_REQUEST['userpwd']);
+        //查询用户是否存在
+        $selectuser = Db::table('xm_tbl_user')->where('id', $user_id)->find();
+        if (isset($selectuser)) {
+            //验证用户密码
+            $selectuserpwd = Db::table('xm_tbl_user')->where('id', $user_id)->where('user_pwd', $user_pwd)->value('user_pwd');
+            if ($selectuserpwd) {
+                //查询用户是否已绑定银行卡
+                $selectuserbankcard = Db::table('xm_tbl_user')->where('id', $user_id)->value('bank_id');
+                if ($selectuserbankcard) {
+                    $data = array('status' => 1, 'msg' => '已绑定过银行卡', 'data' => '');
+                    return json($data);
+                } else {
+                    Db::table('xm_tbl_user')->where('id', $user_id)->update(['bank_name' => $bank_name, 'bank_id' => $bank_id]);
+                    $data = array('status' => 0, 'msg' => '绑定成功', 'data' => '');
+                    return json($data);
+                }
+            } else {
+                $data = array('status' => 1, 'msg' => '密码错误', 'data' => '');
+                return json($data);
+            }
+        } else {
+            $data = array('status' => 1, 'msg' => '用户不存在', 'data' => '');
+            return json($data);
+        }
+    }
+
+    public function userBankChange()
+    {
+        $user_id = $_REQUEST['userid'];
+        $bank_id = $_REQUEST['bankid'];
+        $bank_name = $_REQUEST['bankname'];
+        $user_pwd = md5($_REQUEST['userpwd']);
+        //查询用户是否存在
+        $selectuser = Db::table('xm_tbl_user')->where('id', $user_id)->find();
+        if (isset($selectuser)) {
+            //查询用户密码是否正确
+            $selectuserpwd = Db::table('xm_tbl_user')->where('id', $user_id)->where('user_pwd', $user_pwd)->value('user_pwd');
+            if ($selectuserpwd) {
+                Db::table('xm_tbl_user')->where('id', $user_id)->update(['bank_id' => $bank_id, 'bank_name' => $bank_name]);
+                $data = array('status' => 0, 'msg' => '修改成功', 'data' => '');
+                return json($data);
+            } else {
+                $data = array('status' => 1, 'msg' => '密码错误', 'data' => '');
+                return json($data);
+            }
+        } else {
+            $data = array('status' => 1, 'msg' => '用户不存在', 'data' => '');
+            return json($data);
+        }
+    }
+
+
 }
