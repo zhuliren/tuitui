@@ -233,5 +233,31 @@ class user
         }
     }
 
-
+    public function selUserId()
+    {
+        $user_id = $_REQUEST['userid'];
+        $sel_user_id = $_REQUEST['seluserid'];
+        $userModel = new UserModel();
+        $user_type = $userModel->userIdentity($user_id);
+        switch ($user_type) {
+            case -1:
+                $data = array('status' => 1, 'msg' => '用户不存在', 'data' => '');
+                return json($data);
+            case 0:
+                $data = array('status' => 1, 'msg' => '无权限查询', 'data' => '');
+                return json($data);
+        }
+        $sel_user_type = $userModel->userIdentity($sel_user_id);
+        switch ($user_type) {
+            case -1:
+                $data = array('status' => 1, 'msg' => '查询的用户id不存在', 'data' => '');
+                return json($data);
+            case 0:
+                $data = array('status' => 1, 'msg' => '查询的用户id尚未绑定邀请码', 'data' => '');
+                return json($data);
+        }
+        $returndata = array('user_id' => $sel_user_id);
+        $data = array('status' => 0, 'msg' => '成功', 'data' => $returndata);
+        return json($data);
+    }
 }

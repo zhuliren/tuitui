@@ -16,7 +16,7 @@ class Pro
     public function proList()
     {
         //项目列表
-        $prolist = Db::query('SELECT a.`id`,a.`pro_name`,a.`pro_originator`,a.`pro_headimg`,b.`value` AS pro_state ,COUNT(c.id) AS pro_innum FROM xm_tbl_pro a LEFT JOIN xm_tbl_dictionary b ON a.`pro_state`=b.`id` LEFT JOIN xm_tbl_pro_card c ON a.`id`=c.`pro_id`');
+        $prolist = Db::query('SELECT a.`id`,a.`pro_name`,a.`pro_originator`,a.`pro_headimg`,b.`value` AS pro_state,a.`pro_innum` FROM xm_tbl_pro a LEFT JOIN xm_tbl_dictionary b ON a.`pro_state`=b.`id`');
         $prolistnum = count($prolist);
         $datadetails = array('listnum' => $prolistnum, 'listdata' => $prolist);
         $data = array('status' => 0, 'msg' => '成功', 'data' => $datadetails);

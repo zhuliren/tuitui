@@ -26,6 +26,7 @@ Route::rule('userInfoSet','index/User/userInfoSet');
 Route::rule('userUpCodeSet','index/User/userUpCodeSet');
 Route::rule('userPwdSet','index/User/userPwdSet');
 Route::rule('userPwdChange','index/User/userPwdChange');
+Route::rule('selUserId','index/User/selUserId');
 
 Route::rule('userBankInfo','index/User/userBankInfo');
 Route::rule('userBankSet','index/User/userBankSet');
@@ -36,5 +37,7 @@ Route::rule('proDetails','index/Pro/proDetails');
 
 Route::rule('proCardDetails','index/ProCard/proCardDetails');
 Route::rule('myCardList','index/ProCard/myCardList');
+Route::rule('myProCardDetails','index/ProCard/myProCardDetails');
+Route::rule('cardGiveTo','index/ProCard/cardGiveTo');
 
 Route::rule('generateOrder','index/Order/generateOrder');
