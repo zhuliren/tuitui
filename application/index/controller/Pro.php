@@ -38,9 +38,9 @@ class Pro
         //昨日数据绑定
         $pro_datadetails = array();
         $n = 0;
-        $daygrow = 1;
-        $weekgrow = 0.5;
-        $mongrow = -2.7;
+        $daygrow = 0.1;
+        $weekgrow = 0.1;
+        $mongrow = 0.1;
         foreach ($pro_data as $arr) {
             $pro_datadetails[$n]['pro_dataname'] = Db::table('xm_tbl_dictionary')->where('id', $arr['pro_dataname'])->value('value');
             $pro_datadetails[$n]['pro_datavalue'] = $arr['pro_datavalue'];
@@ -67,7 +67,7 @@ LEFT JOIN xm_tbl_pro_finance c ON a.`id` = c.`pro_id` where a.id= ? ', [$pro_id]
             $pro_cardinfo = Db::table('xm_tbl_pro_cardstage')->where('pro_id', $pro_id)->order('card_stage desc')->find();
             $pro_card_surplus = $pro_cardinfo['agentcard_num'] - $pro_cardinfo['agentcard_used'];
             $pro_card_id = $pro_cardinfo['id'];
-            $pro_cardsellinfo = array('pro_card_price' => $pro_cardinfo['card_price'], 'pro_card_surplus' => $pro_card_surplus,'pro_card_id'=>$pro_card_id);
+            $pro_cardsellinfo = array('pro_card_name'=>$pro_cardinfo['card_name'],'pro_card_price' => $pro_cardinfo['card_price'], 'pro_card_surplus' => $pro_card_surplus,'pro_card_id'=>$pro_card_id);
         }
         $prodetails = array('pro_yetdata' => $pro_yesterday_datadetails, 'pro_baseinfo' => $pro_info, 'pro_cardsellinfo' => $pro_cardsellinfo);
         $returndata = array('status' => 0, 'msg' => '成功', 'data' => $prodetails);
