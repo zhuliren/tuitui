@@ -78,8 +78,15 @@ class user
 
     public function userInfoSet()
     {
+        $user_name = $_REQUEST['name'];
+        $user_phone = $_REQUEST['phone'];
+        $user_name = $_REQUEST['username'];
         $order_id = date('Ymd') . substr(implode(NULL, array_map('ord', str_split(substr(uniqid(), 7, 13), 1))), 0, 8);
         return $order_id;
+    }
+
+    public function userRealInfoSet(){
+
     }
 
     public function userUpCodeSet()

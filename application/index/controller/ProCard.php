@@ -49,7 +49,7 @@ class ProCard
             $card_info = array_merge($card_info, $card_info_bonus);
         }
         $card_surplus_num = $selectprocard['agentcard_num'] - $selectprocard['agentcard_used'];
-        $returndata = array('card_price' => $selectprocard['card_price'], 'card_surplus_num' => $card_surplus_num, 'card_info' => $card_info);
+        $returndata = array('card_name'=>$selectprocard['card_name'],'card_price' => $selectprocard['card_price'], 'card_surplus_num' => $card_surplus_num, 'card_info' => $card_info);
         $data = array('status' => 0, 'msg' => 'test', 'data' => $returndata);
         return json($data);
     }
