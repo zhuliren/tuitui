@@ -38,9 +38,9 @@ class Pro
         //昨日数据绑定
         $pro_datadetails = array();
         $n = 0;
-        $daygrow = 0.1;
-        $weekgrow = 0.1;
-        $mongrow = 0.1;
+        $daygrow = 0.21;
+        $weekgrow = 0.17;
+        $mongrow = 0.09;
         foreach ($pro_data as $arr) {
             $pro_datadetails[$n]['pro_dataname'] = Db::table('xm_tbl_dictionary')->where('id', $arr['pro_dataname'])->value('value');
             $pro_datadetails[$n]['pro_datavalue'] = $arr['pro_datavalue'];

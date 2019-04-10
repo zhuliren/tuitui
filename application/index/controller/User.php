@@ -39,7 +39,7 @@ class user
                 //无用户信息，插入用户信息
                 $userdata = ['wechat_open_id' => $openid, 'created_time' => date("Y-m-d H:i:s", time())];
                 $user_id = Db::table('xm_tbl_user')->insertGetId($userdata);
-                $returndata = array('user_id' => $user_id, 'openid' => $openid, 'user_type' => '0', 'user_type_msg' => '普通用户');
+                $returndata = array('user_id' => $user_id, 'openid' => $openid, 'user_type' => '0', 'user_type_msg' => '普通用户', 'user_pwd_type' => 0);
                 $data = array('status' => 0, 'msg' => '登录成功', 'data' => $returndata);
                 return json($data);
             } else {
@@ -78,15 +78,19 @@ class user
 
     public function userInfoSet()
     {
-        $user_name = $_REQUEST['name'];
-        $user_phone = $_REQUEST['phone'];
-        $user_name = $_REQUEST['username'];
-        $order_id = date('Ymd') . substr(implode(NULL, array_map('ord', str_split(substr(uniqid(), 7, 13), 1))), 0, 8);
-        return $order_id;
-    }
-
-    public function userRealInfoSet(){
-
+        $user_id = $_REQUEST['userid'];
+        $user_type = $_REQUEST['type'];
+        $user_value = $_REQUEST['value'];
+        //判断字段类型
+        if ($user_type == 'user_name' || $user_type == 'user_phone' || $user_type == 'user_real_name' || $user_type == 'user_card_id') {
+            //直接插入数据
+            Db::table('xm_tbl_user')->where('id', $user_id)->update([$user_type => $user_value]);
+            $data = array('status' => 0, 'msg' => '成功', 'data' => '');
+            return json($data);
+        } else {
+            $data = array('status' => 1, 'msg' => '字段名不符合规定', 'data' => '');
+            return json($data);
+        }
     }
 
     public function userUpCodeSet()
@@ -266,5 +270,79 @@ class user
         $returndata = array('user_id' => $sel_user_id);
         $data = array('status' => 0, 'msg' => '成功', 'data' => $returndata);
         return json($data);
+    }
+
+    public function myCode()
+    {
+        $user_id = $_REQUEST['userid'];
+        $userdetails = db('xm_tbl_user')->where('id', $user_id)->find();
+        $returndata = array('usercode' => $userdetails['user_code']);
+        $data = array('status' => 0, 'msg' => '成功', 'data' => $returndata);
+        return json($data);
+    }
+
+    public function userRegisterWithCode()
+    {
+        $code = $_REQUEST['code'];
+        $up_code = $_REQUEST['upcode'];
+        $appid = "wx4473d33d20a8d3b3";
+        $secret = "a1904ad7e0ab761657a294bc00352c3d";
+        $URL = "https://api.weixin.qq.com/sns/jscode2session?appid=$appid&secret=$secret&js_code=$code&grant_type=authorization_code";
+        $header[] = "Cookie: " . "appver=1.5.0.75771;";
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $URL);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
+        curl_setopt($ch, CURLOPT_REFERER, '');
+        $output = curl_exec($ch);
+        curl_close($ch);
+        $output = json_decode($output, true);
+        //生成用户邀请码
+        $userModel = new UserModel();
+        $user_code = $userModel->generateCode();
+        if (isset($output['openid']) || (isset($output['errcode']) ? $output['errcode'] : 0) == 0) {
+            $openid = $output['openid'];
+            //查询是否有该openid在数据库中
+            $userdetails = Db::query('SELECT * FROM xm_tbl_user WHERE wechat_open_id = ?', [$openid]);
+            if (count($userdetails) == 0) {
+                //无用户信息，插入用户信息
+                $userdata = ['wechat_open_id' => $openid, 'created_time' => date("Y-m-d H:i:s", time()), 'user_code' => $user_code, 'up_code' => $up_code];
+                $user_id = Db::table('xm_tbl_user')->insertGetId($userdata);
+                $returndata = array('user_id' => $user_id, 'openid' => $openid, 'user_type' => '1', 'user_type_msg' => '被邀请用户', 'user_pwd_type' => 0);
+                $data = array('status' => 0, 'msg' => '登录成功', 'data' => $returndata);
+                return json($data);
+            } else {
+                //返回用户信息
+                $userdetails = db('xm_tbl_user')->where('wechat_open_id', $openid)->find();
+                if ($userdetails['up_code'] == null) {
+                    //插入邀请码
+                    Db::table('xm_tbl_user')->where('wechat_open_id', $openid)->update(['user_code' => $user_code, 'up_code' => $up_code]);
+                }
+                $user_type_msg = '被邀请用户';
+                $user_type = '1';
+                if ($userdetails['user_pwd'] == null) {
+                    $user_pwd_type = 0;
+                } else {
+                    $user_pwd_type = 1;
+                }
+                $returndata = array('user_id' => $userdetails['id'], 'openid' => $openid, 'user_type' => $user_type, 'user_type_msg' => $user_type_msg, 'user_pwd_type' => $user_pwd_type);
+                $data = array('status' => 0, 'msg' => '登录成功', 'data' => $returndata);
+                return json($data);
+            }
+        } else if ($output['errcode'] == 40029) {
+            $data = array('status' => 1, 'msg' => 'code无效', 'data' => '');
+            return json($data);
+        } else if ($output['errcode'] == 45011) {
+            $data = array('status' => 1, 'msg' => '频率限制，每个用户每分钟100次', 'data' => '');
+            return json($data);
+        } else if ($output['errcode'] == -1) {
+            $data = array('status' => 1, 'msg' => '微信系统繁忙稍后再试', 'data' => '');
+            return json($data);
+        } else if ($output['errcode'] == 40163) {
+            $data = array('status' => 1, 'msg' => 'code已经被使用了', 'data' => '');
+            return json($data);
+        }
     }
 }
