@@ -49,7 +49,7 @@ class ProCard
             $card_info = array_merge($card_info, $card_info_bonus);
         }
         $card_surplus_num = $selectprocard['agentcard_num'] - $selectprocard['agentcard_used'];
-        $returndata = array('card_name'=>$selectprocard['card_name'],'card_price' => $selectprocard['card_price'], 'card_surplus_num' => $card_surplus_num, 'card_info' => $card_info);
+        $returndata = array('card_name' => $selectprocard['card_name'], 'card_price' => $selectprocard['card_price'], 'card_surplus_num' => $card_surplus_num, 'card_info' => $card_info);
         $data = array('status' => 0, 'msg' => 'test', 'data' => $returndata);
         return json($data);
     }
@@ -132,18 +132,26 @@ class ProCard
         $user_id = $_REQUEST['userid'];
         $to_user_id = $_REQUEST['touserid'];
         $card_list_string = $_REQUEST['cardlist'];
-        //分离数组
-        $card_list = explode(",", $card_list_string);
-        //遍历转让代理权
-        foreach ($card_list as $eachprocardid) {
-            //单条转让代理 查询id
-            //插入历史表
-            $data = ['pro_card_id' => $eachprocardid, 'last_user_id' => $to_user_id, 'prev_user_id' => $user_id];
-            Db::table('xm_tbl_pro_card_history')->insert($data);
-            //修改代理权状态
-            Db::table('xm_tbl_pro_card')->where('id', $eachprocardid)->update(['user_id' => $to_user_id, 'pro_card_lasttrantime' => date("Y-m-d H:i:s", time())]);
+        $user_pwd = md5(md5($_REQUEST['userpwd']));
+        //判断用户密码
+        $selectuserpwd = Db::table('xm_tbl_user')->where('id', $user_id)->where('user_pwd', $user_pwd)->value('user_pwd');
+        if ($selectuserpwd) {
+            //分离数组
+            $card_list = explode(",", $card_list_string);
+            //遍历转让代理权
+            foreach ($card_list as $eachprocardid) {
+                //单条转让代理 查询id
+                //插入历史表
+                $data = ['pro_card_id' => $eachprocardid, 'last_user_id' => $to_user_id, 'prev_user_id' => $user_id, 'creat_time' => date("Y-m-d H:i:s", time())];
+                Db::table('xm_tbl_pro_card_history')->insert($data);
+                //修改代理权状态
+                Db::table('xm_tbl_pro_card')->where('id', $eachprocardid)->update(['user_id' => $to_user_id, 'pro_card_lasttrantime' => date("Y-m-d H:i:s", time())]);
+            }
+            $data = array('status' => 0, 'msg' => '转让成功', 'data' => '');
+            return json($data);
+        } else {
+            $data = array('status' => 1, 'msg' => '密码错误', 'data' => '');
+            return json($data);
         }
-        $data = array('status' => 0, 'msg' => '转让成功', 'data' => '');
-        return json($data);
     }
 }

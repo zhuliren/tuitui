@@ -20,29 +20,38 @@
 //
 //];
 use think\Route;
+
 //Route::rule('路由表达式','路由地址','请求类型','路由参数（数组）','变量规则（数组）');
 //用户模块
-Route::rule('userRegister','index/User/userRegister');
-Route::rule('userInfoSet','index/User/userInfoSet');
-Route::rule('userUpCodeSet','index/User/userUpCodeSet');
-Route::rule('userPwdSet','index/User/userPwdSet');
-Route::rule('userPwdChange','index/User/userPwdChange');
-Route::rule('userInfoSet','index/User/userInfoSet');
-Route::rule('myCode','index/User/myCode');
-Route::rule('userRegisterWithCode','index/User/userRegisterWithCode');
-Route::rule('selUserId','index/User/selUserId');
-Route::rule('userBankInfo','index/User/userBankInfo');
-Route::rule('userBankSet','index/User/userBankSet');
-Route::rule('userBankChange','index/User/userBankChange');
+Route::rule('userRegister', 'index/User/userRegister');
+Route::rule('userInfoSet', 'index/User/userInfoSet');
+Route::rule('userUpCodeSet', 'index/User/userUpCodeSet');
+Route::rule('userPwdSet', 'index/User/userPwdSet');
+Route::rule('userPwdChange', 'index/User/userPwdChange');
+Route::rule('userInfoSet', 'index/User/userInfoSet');
+Route::rule('myCode', 'index/User/myCode');
+Route::rule('userRegisterWithCode', 'index/User/userRegisterWithCode');
+Route::rule('selUserId', 'index/User/selUserId');
+Route::rule('selUserInfo', 'index/User/selUserInfo');
+Route::rule('userBankInfo', 'index/User/userBankInfo');
+Route::rule('userBankSet', 'index/User/userBankSet');
+Route::rule('userBankChange', 'index/User/userBankChange');
+Route::rule('myChannel', 'index/User/myChannel');
 //项目模块
-Route::rule('proList','index/Pro/proList');
-Route::rule('proDetails','index/Pro/proDetails');
+Route::rule('proList', 'index/Pro/proList');
+Route::rule('proDetails', 'index/Pro/proDetails');
 //代理权模块
-Route::rule('proCardDetails','index/ProCard/proCardDetails');
-Route::rule('myCardList','index/ProCard/myCardList');
-Route::rule('myProCardDetails','index/ProCard/myProCardDetails');
-Route::rule('cardGiveTo','index/ProCard/cardGiveTo');
+Route::rule('proCardDetails', 'index/ProCard/proCardDetails');
+Route::rule('myCardList', 'index/ProCard/myCardList');
+Route::rule('myProCardDetails', 'index/ProCard/myProCardDetails');
+Route::rule('cardGiveTo', 'index/ProCard/cardGiveTo');
 //订单模块
-Route::rule('generateOrder','index/Order/generateOrder');
+Route::rule('generateOrder', 'index/Order/generateOrder');
 //系统基础数据模块
-Route::rule('getSecret','index/BasicData/getSecret');
+Route::rule('getSecret', 'index/BasicData/getSecret');
+//优惠券模块
+Route::rule('myCouponList', 'index/Coupon/myCouponList');
+Route::rule('couponGiveTo', 'index/Coupon/couponGiveTo');
+
+//测试模块
+Route::rule('test', 'index/BasicData/test');

@@ -10,6 +10,7 @@ namespace app\index\controller;
 
 
 use app\index\model\UserModel;
+use think\Db;
 
 class BasicData
 {
@@ -29,4 +30,27 @@ class BasicData
         $data = array('status' => 0, 'msg' => '成功', 'data' => $returndata);
         return json($data);
     }
+
+    public function userAgreement(){
+        $user_id = $_REQUEST['userid'];
+        //判断用户参与项目
+        $userModel = new UserModel();
+        $user_type = $userModel->userIdentity($user_id);
+        switch ($user_type) {
+            case -1:break;
+            case 0:break;
+            case 1:break;
+            case 2:break;
+        }
+    }
+
+    public function test(){
+        return 1;
+        $user_id = 3;
+        $insertdata = ['pro_id'=>1,'pro_stage_id'=>1,'pro_card_oriprice'=>400,'pro_card_newprice'=>400,'pro_card_lasttrantime'=>date("Y-m-d H:i:s", time()),'pro_card_firstrantime'=>date("Y-m-d H:i:s", time()),'user_id'=>$user_id,'pro_card_pprice'=>400];
+        for($i=0;$i<100;$i++){
+        Db::table('xm_tbl_pro_card')->insert($insertdata);
+        }
+    }
+
 }

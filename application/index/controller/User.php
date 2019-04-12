@@ -135,7 +135,7 @@ class user
     public function userPwdSet()
     {
         $user_id = $_REQUEST['userid'];
-        $user_pwd = md5($_REQUEST['userpwd']);
+        $user_pwd = md5(md5($_REQUEST['userpwd']));
         //查询用户是否已设置密码
         $selectuserpwd = Db::table('xm_tbl_user')->where('id', $user_id)->value('user_pwd');
         if ($selectuserpwd) {
@@ -151,8 +151,8 @@ class user
     public function userPwdChange()
     {
         $user_id = $_REQUEST['userid'];
-        $old_user_pwd = md5($_REQUEST['olduserpwd']);
-        $new_user_pwd = md5($_REQUEST['newuserpwd']);
+        $old_user_pwd = md5(md5($_REQUEST['olduserpwd']));
+        $new_user_pwd = md5(md5($_REQUEST['newuserpwd']));
         //查询用户旧密码是否正确
         $selectuserpwd = Db::table('xm_tbl_user')->where('id', $user_id)->where('user_pwd', $old_user_pwd)->value('user_pwd');
         if ($selectuserpwd) {
@@ -160,7 +160,7 @@ class user
             $data = array('status' => 0, 'msg' => '设置成功', 'data' => '');
             return json($data);
         } else {
-            $data = array('status' => 1, 'msg' => '密码错误', 'data' => '');
+            $data = array('status' => 1, 'msg' => '原支付密码错误', 'data' => '');
             return json($data);
         }
     }
@@ -192,7 +192,7 @@ class user
         $user_id = $_REQUEST['userid'];
         $bank_id = $_REQUEST['bankid'];
         $bank_name = $_REQUEST['bankname'];
-        $user_pwd = md5($_REQUEST['userpwd']);
+        $user_pwd = md5(md5($_REQUEST['userpwd']));
         //查询用户是否存在
         $selectuser = Db::table('xm_tbl_user')->where('id', $user_id)->find();
         if (isset($selectuser)) {
@@ -224,7 +224,7 @@ class user
         $user_id = $_REQUEST['userid'];
         $bank_id = $_REQUEST['bankid'];
         $bank_name = $_REQUEST['bankname'];
-        $user_pwd = md5($_REQUEST['userpwd']);
+        $user_pwd = md5(md5($_REQUEST['userpwd']));
         //查询用户是否存在
         $selectuser = Db::table('xm_tbl_user')->where('id', $user_id)->find();
         if (isset($selectuser)) {
@@ -268,6 +268,35 @@ class user
                 return json($data);
         }
         $returndata = array('user_id' => $sel_user_id);
+        $data = array('status' => 0, 'msg' => '成功', 'data' => $returndata);
+        return json($data);
+    }
+
+    public function selUserInfo(){
+        $user_id = $_REQUEST['userid'];
+        $sel_user_id = $_REQUEST['seluserid'];
+        $userModel = new UserModel();
+        $user_type = $userModel->userIdentity($user_id);
+        switch ($user_type) {
+            case -1:
+                $data = array('status' => 1, 'msg' => '用户不存在', 'data' => '');
+                return json($data);
+            case 0:
+                $data = array('status' => 1, 'msg' => '无权限查询', 'data' => '');
+                return json($data);
+        }
+        $sel_user_type = $userModel->userIdentity($sel_user_id);
+        switch ($user_type) {
+            case -1:
+                $data = array('status' => 1, 'msg' => '查询的用户id不存在', 'data' => '');
+                return json($data);
+            case 0:
+                $data = array('status' => 1, 'msg' => '查询的用户id尚未绑定邀请码', 'data' => '');
+                return json($data);
+        }
+        //查询用户信息
+        $selectuserinfo = Db::table('xm_tbl_user')->where('id', $sel_user_id)->find();
+        $returndata = array('user_id' => $selectuserinfo['id'], 'user_name' => $selectuserinfo['user_name'], 'user_phone' => $selectuserinfo['user_phone']);
         $data = array('status' => 0, 'msg' => '成功', 'data' => $returndata);
         return json($data);
     }
@@ -342,6 +371,41 @@ class user
             return json($data);
         } else if ($output['errcode'] == 40163) {
             $data = array('status' => 1, 'msg' => 'code已经被使用了', 'data' => '');
+            return json($data);
+        }
+    }
+
+    public function myChannel()
+    {
+        $user_id = $_REQUEST['userid'];
+        //判断用户状态
+        $userModel = new UserModel();
+        $user_type = $userModel->userIdentity($user_id);
+        switch ($user_type) {
+            case -1:
+                $data = array('status' => 1, 'msg' => '查询的用户id不存在', 'data' => '');
+                return json($data);
+            case 0:
+                $data = array('status' => 1, 'msg' => '无权限查询', 'data' => '');
+                return json($data);
+        }
+        //查询我的邀请码
+        $selectmycode = Db::table('xm_tbl_user')->where('id', $user_id)->value('user_code');
+        //查询我的渠道下级
+        $selectmychannel = Db::table('xm_tbl_user')->where('up_code', $selectmycode)->select();
+        //数据重组
+        $channel_num = 0;
+        if($selectmychannel){
+            foreach ($selectmychannel as $eachchannel) {
+                //数据绑定
+                $mychanneldetails[$channel_num] = array('user_id' => $eachchannel['id'], 'user_name' => $eachchannel['user_name'], 'user_phone' => $eachchannel['user_phone']);
+                $channel_num++;
+            }
+            $returndata = array('channel_num' => $channel_num, 'channel_details' => $mychanneldetails);
+            $data = array('status' => 0, 'msg' => '成功', 'data' => $returndata);
+            return json($data);
+        }else{
+            $data = array('status' => 1, 'msg' => '当前下级渠道', 'data' => '');
             return json($data);
         }
     }
