@@ -272,7 +272,8 @@ class user
         return json($data);
     }
 
-    public function selUserInfo(){
+    public function selUserInfo()
+    {
         $user_id = $_REQUEST['userid'];
         $sel_user_id = $_REQUEST['seluserid'];
         $userModel = new UserModel();
@@ -395,7 +396,7 @@ class user
         $selectmychannel = Db::table('xm_tbl_user')->where('up_code', $selectmycode)->select();
         //数据重组
         $channel_num = 0;
-        if($selectmychannel){
+        if ($selectmychannel) {
             foreach ($selectmychannel as $eachchannel) {
                 //数据绑定
                 $mychanneldetails[$channel_num] = array('user_id' => $eachchannel['id'], 'user_name' => $eachchannel['user_name'], 'user_phone' => $eachchannel['user_phone']);
@@ -404,8 +405,57 @@ class user
             $returndata = array('channel_num' => $channel_num, 'channel_details' => $mychanneldetails);
             $data = array('status' => 0, 'msg' => '成功', 'data' => $returndata);
             return json($data);
-        }else{
-            $data = array('status' => 1, 'msg' => '当前下级渠道', 'data' => '');
+        } else {
+            $data = array('status' => 1, 'msg' => '当前无下级渠道', 'data' => '');
+            return json($data);
+        }
+    }
+
+    public function userInfoGet()
+    {
+        $user_id = $_REQUEST['userid'];
+        $selectuserinfo = Db::table('xm_tbl_user')->where('id', $user_id)->find();
+        if ($selectuserinfo) {
+            //用户信息绑定
+            $returndata = array('userid' => $selectuserinfo['id'], 'username' => $selectuserinfo['user_name'], 'phone' => $selectuserinfo['user_phone'], 'realname' => $selectuserinfo['user_real_name'], 'cardid' => $selectuserinfo['user_card_id']);
+            $data = array('status' => 0, 'msg' => '成功', 'data' => $returndata);
+            return json($data);
+        } else {
+            $data = array('status' => 1, 'msg' => '用户不存在', 'data' => '');
+            return json($data);
+        }
+    }
+
+    public function bindingMalluser()
+    {
+        $user_id = $_REQUEST['userid'];
+        $ml_user_id = $_REQUEST['mluserid'];
+        //判断用户是否存在
+        $userModel = new UserModel();
+        $isbinding = $userModel->mlxmBinding($ml_user_id);
+        if ($isbinding) {
+            $data = array('status' => 1, 'msg' => '已绑定过推推项目', 'data' => '');
+            return json($data);
+        } else {
+            $user_type = $userModel->userIdentity($user_id);
+            $selesmantype = 0;
+            switch ($user_type) {
+                case -1:
+                    $data = array('status' => 1, 'msg' => '用户不存在', 'data' => '');
+                    return json($data);
+                //判断用户当前是否为代理商
+                case 2:
+                    $selesmantype = 1;
+            }
+            //TODO 目前绑定推推项目均为分销员，到期时间为5月31日
+            $selesmantype = 1;
+            $salesman_due = '2019-05-31';
+            //绑定
+            $userdata = ['ml_user_id' => $ml_user_id, 'xm_user_id' => $user_id, 'creat_time' => date("Y-m-d H:i:s", time())];
+            Db::table('ml_xm_binding')->insert($userdata);
+            //设置用户代理
+            Db::table('ml_tbl_user')->where('id', $ml_user_id)->update(['is_salesman' => $selesmantype, 'salesman_due' => $salesman_due]);
+            $data = array('status' => 0, 'msg' => '成功', 'data' => '');
             return json($data);
         }
     }

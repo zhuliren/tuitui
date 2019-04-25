@@ -60,4 +60,14 @@ class UserModel extends Model
             return -1;
         }
     }
+
+    //查询用户是否绑定推推项目
+    public function mlxmBinding($user_id){
+        $selectuserbinding = Db::table('ml_xm_binding')->where('ml_user_id',$user_id)->find();
+        if($selectuserbinding){
+            return true;
+        }else{
+            return false;
+        }
+    }
 }

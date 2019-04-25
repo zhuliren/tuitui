@@ -49,7 +49,14 @@ class ProCard
             $card_info = array_merge($card_info, $card_info_bonus);
         }
         $card_surplus_num = $selectprocard['agentcard_num'] - $selectprocard['agentcard_used'];
-        $returndata = array('card_name' => $selectprocard['card_name'], 'card_price' => $selectprocard['card_price'], 'card_surplus_num' => $card_surplus_num, 'card_info' => $card_info);
+        //代理权政策查询
+        $selectpropolicy = Db::table('xm_tbl_pro_policy')->where('pro_id', $selectprocard['pro_id'])->limit(1)->order("id desc")->find();
+        if ($selectpropolicy) {
+            $pro_policy = $selectpropolicy['pro_policy'];
+        } else {
+            $pro_policy = '';
+        }
+        $returndata = array('card_name' => $selectprocard['card_name'], 'card_price' => $selectprocard['card_price'], 'card_surplus_num' => $card_surplus_num, 'card_info' => $card_info, 'pro_policy' => $pro_policy);
         $data = array('status' => 0, 'msg' => 'test', 'data' => $returndata);
         return json($data);
     }
@@ -115,7 +122,9 @@ class ProCard
             $card_num = 0;
             foreach ($selectmyprocard as $eachprocard) {
                 //数据绑定
-                $procarddetails[$card_num] = array('card_id' => $eachprocard['id'], 'card_pprice' => $eachprocard['pro_card_pprice'], 'ftime' => $eachprocard['pro_card_firstrantime'], 'ltime' => $eachprocard['pro_card_lasttrantime'], 'selection' => false);
+                $procarddetails[$card_num] = array('card_id' => $eachprocard['id'],
+                    'card_pprice' => $eachprocard['pro_card_pprice'], 'ftime' => $eachprocard['pro_card_firstrantime'],
+                    'ltime' => $eachprocard['pro_card_lasttrantime'], 'selection' => false);
                 $card_num++;
             }
             $returndata = array('card_num' => $card_num, 'mycardlist' => $procarddetails);
