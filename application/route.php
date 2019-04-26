@@ -22,6 +22,7 @@
 use think\Route;
 
 //Route::rule('路由表达式','路由地址','请求类型','路由参数（数组）','变量规则（数组）');
+Route::rule('test', 'index/Index/test');
 //用户模块
 Route::rule('userRegister', 'index/User/userRegister');
 Route::rule('userInfoSet', 'index/User/userInfoSet');
@@ -58,10 +59,6 @@ Route::rule('couponGiveTo', 'index/Coupon/couponGiveTo');
 Route::rule('couponDetails', 'index/Coupon/couponDetails');
 //支付模块
 Route::rule('unifiedorder', 'index/WechatPay/unifiedorder');
-
-//测试模块
-Route::rule('test', 'index/BasicData/test');
-
 //商城用户模块
 Route::rule('userMallRegister', 'index/MallUser/userMallRegister');
 Route::rule('userMallShareRegister', 'index/MallUser/userMallShareRegister');

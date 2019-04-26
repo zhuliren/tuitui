@@ -308,6 +308,7 @@ class MallOrder
             $pay_price = $orderdata['pay_price'];//订单支付金额
             $creat_time = $orderdata['creat_time'];//订单时间
             $order_type = $orderdata['order_type'];//订单状态0.待支付1.待收货2.待核销3.已完成4.已取消
+            $phone = $orderdata['phone'];//订单手机号
             $order_zid = $orderdata['id'];
             $order_freight = $orderdata['freight'];//运费
             //查询商品
@@ -349,7 +350,8 @@ class MallOrder
                     'order_id' => $order_id,
                     'creat_time' => $creat_time,
                     'order_type' => $order_type,
-                    'clerk_string' => $order_id
+                    'clerk_string' => $order_id,
+                    'phone' => $phone
                 );
                 $data = array('status' => 0, 'msg' => '成功', 'data' => $returndata);
             } else {

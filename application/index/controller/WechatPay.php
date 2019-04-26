@@ -9,6 +9,7 @@
 namespace app\index\controller;
 
 
+use app\index\model\MenPiao;
 use think\Db;
 
 class WechatPay
@@ -58,17 +59,30 @@ class WechatPay
         $result = $this->FromXml($res);
         //判断返回结果
         if ($result['return_code'] == 'SUCCESS') {
-            $time = time();
-            $info = array(
-                'appId' => $appid,
-                'timeStamp' => "" . $time . "",
-                'nonceStr' => $this->nonce_str(),
-                'package' => 'prepay_id=' . $result['prepay_id'],
-                'signType' => 'MD5',
-            );
-            $paySign = $this->getSign($info);
-            $info['paySign'] = $paySign;
-            $data = array('status' => 0, 'msg' => '成功', 'data' => $info);
+            if ($result['result_code'] == 'SUCCESS') {
+                $time = time();
+                $info = array(
+                    'appId' => $appid,
+                    'timeStamp' => "" . $time . "",
+                    'nonceStr' => $this->nonce_str(),
+                    'package' => 'prepay_id=' . $result['prepay_id'],
+                    'signType' => 'MD5',
+                );
+                $paySign = $this->getSign($info);
+                $info['paySign'] = $paySign;
+                $data = array('status' => 0, 'msg' => '成功', 'data' => $info);
+            } elseif ($result['result_code'] == 'FAIL') {
+                if ($result['err_code'] == 'ORDERPAID') {
+                    $order_type = 2;
+                    //修改订单状态
+                    Db::table('ml_tbl_order')->where('order_id', $order_id)->update(['order_type' => $order_type, 'pay_time' => date("Y-m-d H:i:s", time())]);
+                    //判断否是第三方系统下单
+
+                    $data = array('status' => 1, 'msg' => '订单已支付', 'data' => '');
+                } else {
+                    $data = array('status' => 1, 'msg' => $result['err_code_des'], 'data' => '');
+                }
+            }
         } else {
             $data = array('status' => 1, 'msg' => $result['return_msg'], 'data' => '');
         }
@@ -108,10 +122,38 @@ class WechatPay
                     //修改订单状态
                 } elseif ($type == 2) {
                     //TODO 判断订单类型为核销的还是发货的
-                    //TODO 目前暂定为发货类型订单
-                    $order_type = 1;
+                    //TODO 目前暂定为核销类型订单
+                    $order_type = 2;
                     //修改订单状态
                     Db::table('ml_tbl_order')->where('order_id', $order_id)->update(['order_type' => $order_type, 'pay_time' => date("Y-m-d H:i:s", time())]);
+                    $order_data = Db::table('ml_tbl_order')->where('order_id', $order_id)->find();
+                    $order_zid = $order_data['id'];
+                    //查询商品是否为第三方订单商品
+                    $goods_data = Db::table('ml_tbl_order_details')->where('order_zid', $order_zid)->select();
+                    foreach ($goods_data as $goodsitem) {
+                        $goods_id = $goodsitem['goods_id'];
+                        //查询商品是否为第三方商品
+                        $goods_item_data = Db::table('ml_tbl_goods')->where('id', $goods_id)->find();
+                        $order_details_id = $goodsitem['id'];
+                        Db::table('test')->insert(['text' => $goods_item_data['third_id']]);
+                        if ($goods_item_data['third_id'] == 1) {
+                            //调用123票务下单系统
+                            $menPiao = new MenPiao();
+                            $third_number = $goods_item_data['third_number'];
+                            $user_name = $order_data['user_name'];
+                            $user_phone = $order_data['phone'];
+                            $third_znumber = $goods_item_data['third_znumber'];
+                            $goods_num = $goodsitem['goods_num'];
+                            $creatMenPiaoOrder = $menPiao->creatMenPiaoOrder($third_number, $order_id, $user_name, $user_phone, $third_znumber, $goods_num);
+                            if ($creatMenPiaoOrder) {
+                                $third_isconfirm = 1;
+                                //成功后修改订单状态
+                                Db::table('ml_tbl_order_details')->where('id', $order_details_id)->update(['third_isconfirm' => $third_isconfirm]);
+                            } else {
+                            }
+                        } else {
+                        }
+                    }
                 }
                 $data = array('status' => 0, 'msg' => '成功', 'data' => '');
             } else {

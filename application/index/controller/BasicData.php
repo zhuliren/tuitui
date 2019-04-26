@@ -44,13 +44,4 @@ class BasicData
         }
     }
 
-    public function test(){
-        return 1;
-        $user_id = 3;
-        $insertdata = ['pro_id'=>1,'pro_stage_id'=>1,'pro_card_oriprice'=>400,'pro_card_newprice'=>400,'pro_card_lasttrantime'=>date("Y-m-d H:i:s", time()),'pro_card_firstrantime'=>date("Y-m-d H:i:s", time()),'user_id'=>$user_id,'pro_card_pprice'=>400];
-        for($i=0;$i<100;$i++){
-        Db::table('xm_tbl_pro_card')->insert($insertdata);
-        }
-    }
-
 }
