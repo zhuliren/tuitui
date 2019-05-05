@@ -20,7 +20,7 @@ class MallGoods
         $goods_region = $_REQUEST['goods_region'];//商品地区
         $goods_stock = $_REQUEST['goods_stock'];//商品库存
         $goods_details = $_REQUEST['goods_details'];//商品详情
-        $creat_time = date("Y-m-d H:i:s", time());//创建时间
+        $creat_time = date("Y-m-d h:i:s", time());//创建时间
         $ex_time = $_REQUEST['ex_time'];//到期时间
         $bonus_price = 0;//分销价格（默认为0不参与分销）
         $is_online = 0;//是否上架默认为0不上架 1上架

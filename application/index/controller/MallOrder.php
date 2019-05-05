@@ -9,6 +9,8 @@
 namespace app\index\controller;
 
 
+use app\index\model\MallBonus;
+use app\index\model\MallUserWallet;
 use think\Db;
 
 class MallOrder
@@ -124,6 +126,7 @@ class MallOrder
 
     public function creatMallOrder()
     {
+        //TODO 购物车下单未修改库存
         $user_id = $_REQUEST['userid'];
         $goods_list_string = $_REQUEST['goodslist'];
         $user_name = $_REQUEST['username'];
@@ -163,15 +166,15 @@ class MallOrder
             $orderdata = ['order_id' => $order_id, 'order_type' => $order_type, 'user_id' => $user_id,
                 'phone' => $phone, 'address' => $address, 'house_num' => $house_num,
                 'coupon_id' => $coupon_id, 'freight' => $freight, 'goods_price' => $goods_sum,
-                'pay_price' => $pay_price, 'user_name' => $user_name, 'creat_time' => date("Y-m-d H:i:s", time())];
+                'pay_price' => $pay_price, 'user_name' => $user_name, 'creat_time' => date("Y-m-d h:i:s", time())];
         } else {
             $orderdata = ['order_id' => $order_id, 'order_type' => $order_type, 'user_id' => $user_id,
                 'phone' => $phone, 'address' => $address, 'house_num' => $house_num, 'freight' => $freight, 'goods_price' => $goods_sum,
-                'pay_price' => $pay_price, 'user_name' => $user_name, 'creat_time' => date("Y-m-d H:i:s", time())];
+                'pay_price' => $pay_price, 'user_name' => $user_name, 'creat_time' => date("Y-m-d h:i:s", time())];
         }
         $order_zid = Db::table('ml_tbl_order')->insertGetId($orderdata);
         //插入订单汇总表
-        $orderdatasum = array('order_id' => $order_id, 'type' => 2, 'creat_time' => date("Y-m-d H:i:s", time()));
+        $orderdatasum = array('order_id' => $order_id, 'type' => 2, 'creat_time' => date("Y-m-d h:i:s", time()));
         Db::table('ml_xm_order_summary')->insert($orderdatasum);
         //转换购物车商品到优惠券
         foreach ($goods_list as $eachshopcarid) {
@@ -199,6 +202,8 @@ class MallOrder
         $order_id = $user_id . date('Ymd') . substr(implode(NULL, array_map('ord', str_split(substr(uniqid(), 7, 13), 1))), 0, 8);
         //计算订单金额
         $selectgoodsprice = Db::table('ml_tbl_goods')->where('id', $goods_id)->find();
+        $goods_stock = $selectgoodsprice['goods_stock'];
+        $goods_sell_out = $selectgoodsprice['goods_sell_out'];
         $goods_price = $selectgoodsprice['goods_price'];
         $goods_sum_price = $goods_price * $goods_num;
         $goods_sum = $goods_sum_price;
@@ -223,19 +228,23 @@ class MallOrder
             $orderdata = ['order_id' => $order_id, 'order_type' => $order_type, 'user_id' => $user_id,
                 'phone' => $phone, 'address' => $address, 'house_num' => $house_num,
                 'coupon_id' => $coupon_id, 'freight' => $freight, 'goods_price' => $goods_sum,
-                'pay_price' => $pay_price, 'user_name' => $user_name, 'creat_time' => date("Y-m-d H:i:s", time())];
+                'pay_price' => $pay_price, 'user_name' => $user_name, 'creat_time' => date("Y-m-d h:i:s", time())];
         } else {
             $orderdata = ['order_id' => $order_id, 'order_type' => $order_type, 'user_id' => $user_id,
                 'phone' => $phone, 'address' => $address, 'house_num' => $house_num, 'freight' => $freight, 'goods_price' => $goods_sum,
-                'pay_price' => $pay_price, 'user_name' => $user_name, 'creat_time' => date("Y-m-d H:i:s", time())];
+                'pay_price' => $pay_price, 'user_name' => $user_name, 'creat_time' => date("Y-m-d h:i:s", time())];
         }
         $order_zid = Db::table('ml_tbl_order')->insertGetId($orderdata);
         //插入订单汇总表
-        $orderdatasum = array('order_id' => $order_id, 'type' => 2, 'creat_time' => date("Y-m-d H:i:s", time()));
+        $orderdatasum = array('order_id' => $order_id, 'type' => 2, 'creat_time' => date("Y-m-d h:i:s", time()));
         Db::table('ml_xm_order_summary')->insert($orderdatasum);
         //转换购物车商品到优惠券
         $intoorderdata = array('order_zid' => $order_zid, 'goods_id' => $goods_id, 'goods_num' => $goods_num, 'goods_price' => $goods_price);
         Db::table('ml_tbl_order_details')->insert($intoorderdata);
+        //修改商品库存
+        $new_goods_stock = $goods_stock - $goods_num;
+        $new_goods_sell_out = $goods_sell_out + $goods_num;
+        Db::table('ml_tbl_goods')->where('id', $goods_id)->update(['goods_stock' => $new_goods_stock, 'goods_sell_out' => $new_goods_sell_out]);
         $returndata = array('orderid' => $order_id, 'ordertype' => 2);
         $data = array('status' => 0, 'msg' => '成功', 'data' => $returndata);
         return json($data);
@@ -253,6 +262,8 @@ class MallOrder
         $order_id = $user_id . date('Ymd') . substr(implode(NULL, array_map('ord', str_split(substr(uniqid(), 7, 13), 1))), 0, 8);
         //计算订单金额
         $selectgoodsdata = Db::table('ml_tbl_goods')->where('id', $goods_id)->find();
+        $goods_stock = $selectgoodsdata['goods_stock'];
+        $goods_sell_out = $selectgoodsdata['goods_sell_out'];
         $goods_price = $selectgoodsdata['goods_price'];
         $type = $selectgoodsdata['type'];
         $goods_sum_price = $goods_price * $goods_num;
@@ -277,20 +288,24 @@ class MallOrder
         if ($coupon_id != 'no') {
             $orderdata = ['order_id' => $order_id, 'order_type' => $order_type, 'user_id' => $user_id,
                 'phone' => $phone, 'coupon_id' => $coupon_id, 'freight' => $freight, 'goods_price' => $goods_sum,
-                'pay_price' => $pay_price, 'user_name' => $user_name, 'creat_time' => date("Y-m-d H:i:s", time())];
+                'pay_price' => $pay_price, 'user_name' => $user_name, 'creat_time' => date("Y-m-d h:i:s", time())];
         } else {
             $orderdata = ['order_id' => $order_id, 'order_type' => $order_type, 'user_id' => $user_id,
                 'phone' => $phone, 'freight' => $freight, 'goods_price' => $goods_sum, 'pay_price' => $pay_price,
-                'user_name' => $user_name, 'creat_time' => date("Y-m-d H:i:s", time())];
+                'user_name' => $user_name, 'creat_time' => date("Y-m-d h:i:s", time())];
         }
         $order_zid = Db::table('ml_tbl_order')->insertGetId($orderdata);
         //插入订单汇总表
-        $orderdatasum = array('order_id' => $order_id, 'type' => 2, 'creat_time' => date("Y-m-d H:i:s", time()));
+        $orderdatasum = array('order_id' => $order_id, 'type' => 2, 'creat_time' => date("Y-m-d h:i:s", time()));
         Db::table('ml_xm_order_summary')->insert($orderdatasum);
         //插入商品详情表
         $intoorderdata = array('order_zid' => $order_zid, 'goods_id' => $goods_id, 'goods_num' => $goods_num, 'goods_price' => $goods_price, 'type' => $type);
         Db::table('ml_tbl_order_details')->insert($intoorderdata);
         $returndata = array('orderid' => $order_id, 'ordertype' => 2);
+        //修改商品库存
+        $new_goods_stock = $goods_stock - $goods_num;
+        $new_goods_sell_out = $goods_sell_out + $goods_num;
+        Db::table('ml_tbl_goods')->where('id', $goods_id)->update(['goods_stock' => $new_goods_stock, 'goods_sell_out' => $new_goods_sell_out]);
         $data = array('status' => 0, 'msg' => '成功', 'data' => $returndata);
         return json($data);
     }
@@ -370,14 +385,14 @@ class MallOrder
         //TODO 目前核销数据为订单号
         $order_id = $clerk_string;
         //判断用户是否有该订单的核销权
-        $clerkdata = Db::table('ml_tbl_business_clerk')->where('user_id' . $user_id)->where('type', 1)->find();
+        $clerkdata = Db::table('ml_tbl_business_clerk')->where('user_id', $user_id)->where('type', 1)->find();
         if ($clerkdata) {
             $orderdata = Db::table('ml_tbl_order')->where('order_id', $order_id)->where('order_type', 2)->find();
             if ($orderdata) {
                 //查看订单下能够匹配该核销员商户的商品
                 $business_id = $clerkdata['business_id'];
                 $order_zid = $orderdata['id'];
-                $goodsdata = Db::table('ml_tbl_order_details')->where('order_zid', $order_zid)->select();
+                $goodsdata = Db::table('ml_tbl_order_details')->where('order_zid', $order_zid)->find();
                 //TODO 平台目前为单订单单商品 后续需要修改为单订单多商户多商品 此处的核销逻辑需要修改
                 $goods_num = $goodsdata['goods_num'];
                 $verify_num = $goodsdata['verify_num'];
@@ -418,4 +433,51 @@ class MallOrder
         return json($data);
     }
 
+    public function orderGoodsClerk()
+    {
+        //TODO 此处未判断用户是否拥有核销权
+        $user_id = $_REQUEST['userid'];
+        $goods_id = $_REQUEST['goodsid'];
+        $goods_num = $_REQUEST['num'];
+        $order_id = $_REQUEST['orderid'];
+        //查询订单自增id
+        $orderdata = Db::table('ml_tbl_order')->where('order_id', $order_id)->find();
+        //查询订单的用户
+        $order_user_id = $orderdata['user_id'];
+        $order_zid = $orderdata['id'];
+        //获取子订单详细数据
+        $orderdetailsdata = Db::table('ml_tbl_order_details')->where('order_zid', $order_zid)->where('goods_id', $goods_id)->find();
+        if (($orderdetailsdata['goods_num'] - $orderdetailsdata['verify_num']) < $goods_num) {
+            $data = array('status' => 1, 'msg' => '核销数量错误', 'data' => '');
+        } else {
+            $new_verify_num = $goods_num + $orderdetailsdata['verify_num'];
+            Db::table('ml_tbl_order_details')->where('order_zid', $order_zid)->where('goods_num')->update(['verify_num' => $new_verify_num]);
+            //根据商品金额进行返佣 查询用户上级
+            $channeldata = Db::table('ml_tbl_channel')->where('ml_user_id', $order_user_id)->find();
+            if ($channeldata) {
+                $xm_up_user_id = $channeldata['xm_user_id'];
+                //查询上级在商城的id
+                $bindingdata = Db::table('ml_xm_binding')->where('xm_user_id', $xm_up_user_id)->find();
+                if ($bindingdata) {
+                    $up_ml_user_id = $bindingdata['ml_user_id'];
+                    //查询商品分销价格
+                    $bonusdata = Db::table('ml_tbl_goods_bonus')->where('goods_id', $goods_id)->find();
+                    //TODO 目前只做一级分销
+                    if ($bonusdata['first'] != 0) {
+                        //获得的返佣
+                        $amount = $bonusdata['first'] * $goods_num;
+                        $remarks = '分销奖励：' . $amount . '元';
+                        $mallBonus = new MallUserWallet();
+                        $mallBonus->walletOperation(1, $amount, $up_ml_user_id, $remarks);
+                    }
+                }
+            }
+            //TODO 判断订单是否核销完成，此处为单订单单商品后期改为单订单多商品是需要修改
+            if (($orderdetailsdata['goods_num'] - $new_verify_num) == 0) {
+                Db::table('ml_tbl_order')->where('order_id', $order_id)->update(['order_type' => 3]);
+            }
+            $data = array('status' => 0, 'msg' => '成功', 'data' => '');
+        }
+        return json($data);
+    }
 }

@@ -37,7 +37,7 @@ class MallUser
             $userdetails = Db::query('SELECT * FROM ml_tbl_user WHERE wechat_open_id = ?', [$openid]);
             if (count($userdetails) == 0) {
                 //无用户信息，插入用户信息
-                $userdata = ['wechat_open_id' => $openid, 'created_time' => date("Y-m-d H:i:s", time())];
+                $userdata = ['wechat_open_id' => $openid, 'created_time' => date("Y-m-d h:i:s", time())];
                 $user_id = Db::table('ml_tbl_user')->insertGetId($userdata);
                 $returndata = array('user_id' => $user_id, 'openid' => $openid, 'is_salesman' => '0');
                 $data = array('status' => 0, 'msg' => '登录成功', 'data' => $returndata);
@@ -88,7 +88,7 @@ class MallUser
             $userdetails = Db::query('SELECT * FROM ml_tbl_user WHERE wechat_open_id = ?', [$openid]);
             if (count($userdetails) == 0) {
                 //无用户信息，插入用户信息
-                $userdata = ['wechat_open_id' => $openid, 'created_time' => date("Y-m-d H:i:s", time())];
+                $userdata = ['wechat_open_id' => $openid, 'created_time' => date("Y-m-d h:i:s", time())];
                 $user_id = Db::table('ml_tbl_user')->insertGetId($userdata);
                 $is_salesman = 0;
                 $returndata = array('user_id' => $user_id, 'openid' => $openid, 'is_salesman' => '0');
@@ -124,7 +124,7 @@ class MallUser
                                 $selectupxmid = Db::table('ml_xm_binding')->where('ml_user_id', $up_user_id)->find();
                                 $upxmid = $selectupxmid['xm_user_id'];
                                 //更新渠道表
-                                Db::table('ml_tbl_channel')->where('ml_user_id', $user_id)->update(['xm_user_id' => $upxmid, 'creat_time' => date("Y-m-d H:i:s", time())]);
+                                Db::table('ml_tbl_channel')->where('ml_user_id', $user_id)->update(['xm_user_id' => $upxmid, 'creat_time' => date("Y-m-d h:i:s", time())]);
                             }
                         }
                     }
@@ -136,7 +136,7 @@ class MallUser
                         $selectupxmid = Db::table('ml_xm_binding')->where('ml_user_id', $up_user_id)->find();
                         $upxmid = $selectupxmid['xm_user_id'];
                         //插入渠道表
-                        $userdata = ['ml_user_id' => $user_id, 'xm_user_id' => $upxmid, 'creat_time' => date("Y-m-d H:i:s", time())];
+                        $userdata = ['ml_user_id' => $user_id, 'xm_user_id' => $upxmid, 'creat_time' => date("Y-m-d h:i:s", time())];
                         Db::table('ml_tbl_channel')->insert($userdata);
                     }
                 }
@@ -187,7 +187,7 @@ class MallUser
             //判断用户密码是否正确
             $selectuserpwd = Db::table('xm_tbl_user')->where('id', $xm_user_id)->where('user_pwd', $xm_user_pwd)->value('user_pwd');
             if ($selectuserpwd) {
-                $userdata = ['ml_user_id' => $ml_user_id, 'xm_user_id' => $xm_user_id, 'creat_time' => date("Y-m-d H:i:s", time())];
+                $userdata = ['ml_user_id' => $ml_user_id, 'xm_user_id' => $xm_user_id, 'creat_time' => date("Y-m-d h:i:s", time())];
                 Db::table('ml_xm_binding')->insert($userdata);
                 $data = array('status' => 0, 'msg' => '成功', 'data' => '');
                 return json($data);
@@ -207,7 +207,7 @@ class MallUser
             $data = array('status' => 1, 'msg' => '已绑定过推推项目', 'data' => '');
             return json($data);
         } else {
-            $userdata = ['ml_user_id' => $ml_user_id, 'created_time' => date("Y-m-d H:i:s", time())];
+            $userdata = ['ml_user_id' => $ml_user_id, 'created_time' => date("Y-m-d h:i:s", time())];
             Db::table('ml_xm_binding')->insert($userdata);
             $data = array('status' => 0, 'msg' => '成功', 'data' => '');
             return json($data);
@@ -278,16 +278,17 @@ class MallUser
         }
     }
 
-    //TODO 未完成
     public function isClerk()
     {
         $user_id = $_REQUEST['userid'];
-        $isclerk = Db::table('ml_tbl_business_clerk')->where('user_id', $user_id)->where('type', 1)->find();
+        $isclerk = Db::table('ml_tbl_business_clerk')->where('user_id', $user_id)->find();
         if ($isclerk) {
-            $data = array('status' => 0, 'msg' => '成功', 'data' => '');
+            $returndata = array('type' => $isclerk['type'], 'name' => $isclerk['name'], 'cardid' => $isclerk['cardid'],'business_id'=>$isclerk['business_id']);
+            $data = array('status' => 0, 'msg' => '成功', 'data' => $returndata);
         } else {
             $data = array('status' => 1, 'msg' => '非核销员', 'data' => '');
         }
         return json($data);
     }
+
 }

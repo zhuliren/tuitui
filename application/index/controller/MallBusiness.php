@@ -91,13 +91,21 @@ class MallBusiness
     {
         $user_id = $_REQUEST['userid'];
         $business_id = $_REQUEST['businessid'];
-        //插入数据
-        $data = array('user_id' => $user_id, 'business_id' => $business_id, 'type' => 0);
-        $id = Db::table('ml_tbl_business_clerk')->insertGetId($data);
-        if ($id) {
-            $data = array('status' => 0, 'msg' => '成功', 'data' => array('clerkid' => $id));
+        $name = $_REQUEST['name'];
+        $cardid = $_REQUEST['cardid'];
+        //查询用户是否申请过店员
+        $isapplyforclerk = Db::table('ml_tbl_business_clerk')->where('user_id', $user_id)->find();
+        if ($isapplyforclerk) {
+            $data = array('status' => 1, 'msg' => '已申请过店员', 'data' => array('clerkid' => $isapplyforclerk['id']));
         } else {
-            $data = array('status' => 1, 'msg' => '失败', 'data' => '');
+            //插入数据
+            $data = array('user_id' => $user_id, 'business_id' => $business_id, 'type' => 0, 'name' => $name, 'cardid' => $cardid);
+            $id = Db::table('ml_tbl_business_clerk')->insertGetId($data);
+            if ($id) {
+                $data = array('status' => 0, 'msg' => '成功', 'data' => array('clerkid' => $id));
+            } else {
+                $data = array('status' => 1, 'msg' => '失败', 'data' => '');
+            }
         }
         return json($data);
     }
@@ -116,10 +124,7 @@ class MallBusiness
     {
         $business_id = $_REQUEST['businessid'];
         //查询用户，关联用户表查询
-        $selectdata = Db::view(['ml_tbl_business_clerk' => 'a'], 'user_id,business_id')
-            ->view(['ml_tbl_user' => 'b'], 'user_name,user_phone', 'a.user_id=b.id', 'LEFT')
-            ->where('a.business_id', $business_id)
-            ->select();
+        $selectdata = Db::table('ml_tbl_business_clerk')->where('business_id', $business_id)->column('id,name,cardid,type');
         if ($selectdata) {
             $data = array('status' => 0, 'msg' => '成功', 'data' => $selectdata);
         } else {

@@ -151,10 +151,10 @@ class ProCard
             foreach ($card_list as $eachprocardid) {
                 //单条转让代理 查询id
                 //插入历史表
-                $data = ['pro_card_id' => $eachprocardid, 'last_user_id' => $to_user_id, 'prev_user_id' => $user_id, 'creat_time' => date("Y-m-d H:i:s", time())];
+                $data = ['pro_card_id' => $eachprocardid, 'last_user_id' => $to_user_id, 'prev_user_id' => $user_id, 'creat_time' => date("Y-m-d h:i:s", time())];
                 Db::table('xm_tbl_pro_card_history')->insert($data);
                 //修改代理权状态
-                Db::table('xm_tbl_pro_card')->where('id', $eachprocardid)->update(['user_id' => $to_user_id, 'pro_card_lasttrantime' => date("Y-m-d H:i:s", time())]);
+                Db::table('xm_tbl_pro_card')->where('id', $eachprocardid)->update(['user_id' => $to_user_id, 'pro_card_lasttrantime' => date("Y-m-d h:i:s", time())]);
             }
             $data = array('status' => 0, 'msg' => '转让成功', 'data' => '');
             return json($data);

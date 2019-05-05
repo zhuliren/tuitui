@@ -37,7 +37,7 @@ class user
             $userdetails = Db::query('SELECT * FROM xm_tbl_user WHERE wechat_open_id = ?', [$openid]);
             if (count($userdetails) == 0) {
                 //无用户信息，插入用户信息
-                $userdata = ['wechat_open_id' => $openid, 'created_time' => date("Y-m-d H:i:s", time())];
+                $userdata = ['wechat_open_id' => $openid, 'created_time' => date("Y-m-d h:i:s", time())];
                 $user_id = Db::table('xm_tbl_user')->insertGetId($userdata);
                 $returndata = array('user_id' => $user_id, 'openid' => $openid, 'user_type' => '0', 'user_type_msg' => '普通用户', 'user_pwd_type' => 0);
                 $data = array('status' => 0, 'msg' => '登录成功', 'data' => $returndata);
@@ -338,7 +338,7 @@ class user
             $userdetails = Db::query('SELECT * FROM xm_tbl_user WHERE wechat_open_id = ?', [$openid]);
             if (count($userdetails) == 0) {
                 //无用户信息，插入用户信息
-                $userdata = ['wechat_open_id' => $openid, 'created_time' => date("Y-m-d H:i:s", time()), 'user_code' => $user_code, 'up_code' => $up_code];
+                $userdata = ['wechat_open_id' => $openid, 'created_time' => date("Y-m-d h:i:s", time()), 'user_code' => $user_code, 'up_code' => $up_code];
                 $user_id = Db::table('xm_tbl_user')->insertGetId($userdata);
                 $returndata = array('user_id' => $user_id, 'openid' => $openid, 'user_type' => '1', 'user_type_msg' => '被邀请用户', 'user_pwd_type' => 0);
                 $data = array('status' => 0, 'msg' => '登录成功', 'data' => $returndata);
@@ -451,7 +451,7 @@ class user
             $selesmantype = 1;
             $salesman_due = '2019-05-31';
             //绑定
-            $userdata = ['ml_user_id' => $ml_user_id, 'xm_user_id' => $user_id, 'creat_time' => date("Y-m-d H:i:s", time())];
+            $userdata = ['ml_user_id' => $ml_user_id, 'xm_user_id' => $user_id, 'creat_time' => date("Y-m-d h:i:s", time())];
             Db::table('ml_xm_binding')->insert($userdata);
             //设置用户代理
             Db::table('ml_tbl_user')->where('id', $ml_user_id)->update(['is_salesman' => $selesmantype, 'salesman_due' => $salesman_due]);

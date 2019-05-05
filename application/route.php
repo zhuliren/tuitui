@@ -23,6 +23,7 @@ use think\Route;
 
 //Route::rule('路由表达式','路由地址','请求类型','路由参数（数组）','变量规则（数组）');
 Route::rule('test', 'index/Index/test');
+Route::rule('test2', 'index/Index/test2');
 //用户模块
 Route::rule('userRegister', 'index/User/userRegister');
 Route::rule('userInfoSet', 'index/User/userInfoSet');
@@ -83,6 +84,7 @@ Route::rule('orderClerk', 'index/MallOrder/orderClerk');
 Route::rule('creatMallOrder', 'index/MallOrder/creatMallOrder');
 Route::rule('mallBuyNow', 'index/MallOrder/mallBuyNow');
 Route::rule('creatOrderOnce', 'index/MallOrder/creatOrderOnce');
+Route::rule('orderGoodsClerk', 'index/MallOrder/orderGoodsClerk');
 Route::rule('unifiedorder', 'index/WechatPay/unifiedorder');
 Route::rule('payNotify', 'index/WechatPay/payNotify');
 Route::rule('orderQuery', 'index/WechatPay/orderQuery');
@@ -95,3 +97,5 @@ Route::rule('getBusinessList', 'index/MallBusiness/getBusinessList');
 Route::rule('applyForClerk', 'index/MallBusiness/applyForClerk');
 Route::rule('verifyClerk', 'index/MallBusiness/verifyClerk');
 Route::rule('clerkList', 'index/MallBusiness/clerkList');
+//商城分享模块
+Route::rule('goodssharercode', 'index/MallShareCode/goodssharercode');

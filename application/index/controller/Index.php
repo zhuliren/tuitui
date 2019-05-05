@@ -14,6 +14,17 @@ class Index
 
     public function test()
     {
-        return 1;
+        $page = $_REQUEST['page'];
+        $test = new MenPiao();
+        $res = $test->getPriductsList($page);
+        return $res;
+    }
+
+    public function test2()
+    {
+        $id = $_REQUEST['id'];
+        $test = new MenPiao();
+        $res = $test->getProducts($id);
+        return $res;
     }
 }

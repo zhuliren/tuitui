@@ -20,7 +20,7 @@ class MenPiao
     {
         //文档地址http://doc.123menpiao.com/docs/openapi/order
         $client_id = '10518da3';
-        $timestamp = date('Y-m-d H:i:s', time());
+        $timestamp = date('Y-m-d h:i:s', time());
         $product_number = $third_id;
         $partner_order_number = $order_id;
         $name = $user_name;
@@ -55,7 +55,7 @@ class MenPiao
     {
         //文档地址http://doc.123menpiao.com/docs/openapi/product#%E8%8E%B7%E5%8F%96%E5%8D%95%E4%B8%AA%E5%95%86%E5%93%81%E4%BF%A1%E6%81%AF[v2]
         $client_id = '10518da3';
-        $timestamp = date('Y-m-d H:i:s', time());
+        $timestamp = date('Y-m-d h:i:s', time());
         $timestring = str_replace(' ', '%20', $timestamp);
         $params = array(
             'client_id' => $client_id,
@@ -64,6 +64,22 @@ class MenPiao
         );
         $signature = $this->getSign($params);
         $url = 'http://api.123menpiao.com/vapi/v2/distributor/products/' . $id . '?timestamp=' . $timestring . '&client_id=' . $client_id . '&id=' . $id . '&signature=' . $signature;
+        $res = $this->http_request_get($url);
+        return $res;
+    }
+
+    public function getPriductsList($page){
+        //文档地址http://doc.123menpiao.com/docs/openapi/product#%E8%8E%B7%E5%8F%96%E5%95%86%E5%93%81%E4%BF%A1%E6%81%AF%E5%88%97%E8%A1%A8[v2]
+        $client_id = '10518da3';
+        $timestamp = date('Y-m-d h:i:s', time());
+        $timestring = str_replace(' ', '%20', $timestamp);
+        $params = array(
+            'client_id' => $client_id,
+            'timestamp' => $timestamp,
+            'page' => $page
+        );
+        $signature = $this->getSign($params);
+        $url = 'http://api.123menpiao.com/vapi/v2/distributor/products?timestamp=' . $timestring . '&client_id=' . $client_id . '&page=' . $page . '&signature=' . $signature;
         $res = $this->http_request_get($url);
         return $res;
     }
