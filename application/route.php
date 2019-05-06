@@ -99,3 +99,19 @@ Route::rule('verifyClerk', 'index/MallBusiness/verifyClerk');
 Route::rule('clerkList', 'index/MallBusiness/clerkList');
 //商城分享模块
 Route::rule('goodssharercode', 'index/MallShareCode/goodssharercode');
+
+
+
+
+Route::rule('myOrderNum', 'index/MallUser/myOrderNum');
+Route::rule('myDistri', 'index/MallUser/myDistribution');
+Route::rule('regBefore', 'index/MallUser/registerBefore');
+Route::rule('deCryptData', 'index/MallUser/deCryptData');
+Route::rule('myWallet', 'index/MallUser/myWallet');
+Route::rule('goodsRcode', 'index/MallUser/goodsRcode');
+Route::rule('subUser', 'index/MallUser/subUserList');
+
+
+
+
+

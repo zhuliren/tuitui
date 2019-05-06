@@ -9,16 +9,30 @@
 namespace app\index\controller;
 
 
+use app\common\Model\PublicEnum;
 use app\index\model\UserModel;
 use think\Db;
+use think\Request;
+use think\WXBizDataCrypt;
+
 
 class MallUser
 {
+    protected $appid;
+    protected $secret;
+
+    public function __construct()
+    {
+        $this->appid = PublicEnum::WX_APPID;
+        $this->secret = PublicEnum::WX_SECRET;
+    }
+
+
     public function userMallRegister()
     {
         $code = $_REQUEST['code'];
-        $appid = "wx0fda8074ccdb716d";
-        $secret = "bf55d7a720d5bc162621e3901b7645be";
+        $appid = $this->appid;
+        $secret = $this->secret;
         $URL = "https://api.weixin.qq.com/sns/jscode2session?appid=$appid&secret=$secret&js_code=$code&grant_type=authorization_code";
         $header[] = "Cookie: " . "appver=1.5.0.75771;";
         $ch = curl_init();
@@ -290,5 +304,301 @@ class MallUser
         }
         return json($data);
     }
+
+    /**
+     * @param Request $request
+     * @return \think\Response|\think\response\Json
+     * @time: 2019/5/5
+     * @autor: duheyuan
+     * @throws \think\Exception
+     * 我的订单数
+     */
+    public function myOrderNum(Request $request)
+    {
+
+        $user_id = $request->param('user_id','');
+        if (isset($user_id) && !empty($user_id)){
+            $user_code = Db::query('SELECT xu.user_code FROM ml_xm_binding as mx join xm_tbl_user as xu WHERE mx.xm_user_id = xu.id and mx.ml_user_id = ?',[$user_id]);
+            if (!empty($user_code[0]['user_code'])){
+                $res = Db::name('xm_tbl_user')->where('up_code',$user_code[0]['user_code'])->field('id')->select();
+                $ids = "";
+                foreach ($res as $k=>$v){
+                    $ids .= $v['id'] . ",";
+                }
+                $ids = rtrim($ids,',');
+            }else{
+                $ids = '';
+            }
+            if (isset($ids) && !empty($ids)) {
+                $user_order_id = Db::name('ml_xm_binding')->whereIn('xm_user_id', $ids)->field('ml_user_id')->select();
+                $oids = '';
+                foreach ($user_order_id as $k => $v) {
+                    $oids .= $v['ml_user_id'] . ',';
+                }
+                $oids = rtrim($oids, ',');
+                $goodsId = Db::name('ml_tbl_order')->whereIn('user_id', $oids)->field('id')->select();
+                $orderNum = count($goodsId);
+
+            }else{
+                $orderNum = 0;
+            }
+            $data = array('status'=>1,'msg'=>'成功','data'=>$orderNum);
+            return json($data);
+        }else{
+            return json(array('status'=>0,'msg'=>'参数错误','data'=>''));
+        }
+
+    }
+
+
+    public function myDistribution(Request $request)
+    {
+        $all = $request->param();
+        if (!isset($all['user_id']) || empty($all['user_id'])){
+            return json(array('status'=>0,'msg'=>'参数错误','data'=>''));
+        }
+        $data['useInfo'] = Db::name('ml_tbl_user')->where('id',$all['user_id'])->field('id,user_name,user_phone')->find();
+        $user_code = Db::query('SELECT xu.user_code FROM ml_xm_binding as mx join xm_tbl_user as xu WHERE mx.xm_user_id = xu.id and mx.ml_user_id = ?',[$all['user_id']]);
+        if (!empty($user_code[0]['user_code'])){
+            $res = Db::name('xm_tbl_user')->where('up_code',$user_code[0]['user_code'])->field('id')->select();
+            $ids = "";
+            foreach ($res as $k=>$v){
+                $ids .= $v['id'] . ",";
+            }
+            $ids = rtrim($ids,',');
+        }else{
+            $ids = '';
+        }
+        if (isset($ids) && !empty($ids)) {
+            $user_order_id = Db::name('ml_xm_binding')->whereIn('xm_user_id', $ids)->field('ml_user_id')->select();
+            $oids = '';
+            foreach ($user_order_id as $k => $v) {
+                $oids .= $v['ml_user_id'] . ',';
+            }
+            $oids = rtrim($oids, ',');
+            $goodsId = Db::name('ml_tbl_order')->whereIn('user_id', $oids)->field('id,pay_time')->select();
+            $data['orderNum'] = count($goodsId);
+            $gids = '';
+            $pat_time = '';
+            foreach ($goodsId as $k => $v) {
+                $gids .= $v['id'] . ',';
+                if (!empty($v['pay_time']) && ($pat_time < $v['pay_time'])) {
+                    $pat_time = $v['pay_time'];
+                }
+            }
+            $data['the_last_order'] = $pat_time;
+            $gids = rtrim($gids, ',');
+            $goodsDetail = Db::name('ml_tbl_order_details')->whereIn('order_zid', $gids)->field('goods_id,goods_num')->select();
+            $data['distriMoney'] = 0;
+            foreach ($goodsDetail as $k => $v) {
+                $bouns_price = Db::name('ml_tbl_goods')->where('id', $v['goods_id'])->field('bonus_price')->find();
+                $data['distriMoney'] += $bouns_price['bonus_price'] * $v['goods_num'];
+            }
+        }else{
+            $data = [];
+        }
+        return json(['status'=>1001,'msg'=>'成功','data'=>$data]);
+    }
+
+    public function registerBefore(Request $request)
+    {
+            $res['appid'] = PublicEnum::WX_APPID;
+            $res['secret'] = PublicEnum::WX_SECRET;
+            return json( array('status'=>1,'msg'=>'成功','data'=>$res));
+    }
+
+    public function deCryptData(Request $request)
+    {
+        $all = $request->param();
+        if (!empty($all['nickName'])){
+            $user_name = $all['nickName'];
+        }else{
+            return json(['status'=>0,'msg'=>'1失败','data'=>'']);
+        }
+
+        if (!empty($all['avatarUrl'])){
+            $avatarUrl = $all['avatarUrl'];
+        }else{
+            return json(['status'=>0,'msg'=>'2失败','data'=>'']);
+        }
+        if (isset($all['session_key']) && !empty($all['session_key'])){
+            $session_key = $all['session_key'];
+        }else{
+            return json(['status'=>0,'msg'=>'缺少session_key参数','data'=>'']);
+        }
+        if (isset($all['iv']) && !empty($all['iv'])){
+            $iv = $all['iv'];
+        }else{
+            return json(['status'=>0,'msg'=>'缺少iv参数','data'=>'']);
+        }
+        if (isset($all['encryptData']) && !empty($all['encryptData'])){
+            $encryptedData = $all['encryptData'];
+        }else{
+            return json(['status'=>0,'msg'=>'缺少encryptData参数','data'=>'']);
+        }
+        $user_id = $all['user_id'];
+        $pc = new WXBizDataCrypt($this->appid,$session_key);
+        $errCode = $pc->decryptData($encryptedData, $iv,$data );
+        if ( $errCode == 0){
+            $first = strpos($data,'1');
+            $phone = substr($data,$first,11);
+            Db::name('ml_tbl_user')->where('id',$user_id)->update(['user_phone'=>$phone,'user_name'=>$user_name,'headimg'=>$avatarUrl]);
+            return json(['status'=>1001,'msg'=>'成功','data'=>$data]);
+        }else{
+            return json(['status'=>$errCode,'msg'=>'失败','data'=>'']);
+        }
+    }
+
+    public function myWallet(Request $request)
+    {
+        if ($request->isPost()){
+            $all = $request->param();
+            if (isset($all['user_id']) && !empty($all['user_id'])){
+                $res = Db::name('ml_tbl_wallet')->where('user_id',$all['user_id'])->find();
+                if ($res > 0){
+                    $data['balance'] = $res['balance'];
+                    $data['wallet_detail'] = Db::name('ml_tbl_wallet_details')->where('wallet_id',$res['id'])->field('time,amount,type,order_num')->select();
+                }else{
+                    $data['balance'] = 0;
+                    $data['wallet_detail'] = [];
+                }
+                return json(['status'=>1001,'msg'=>'成功','data'=>$data]);
+            }else{
+                return json(['status'=>2002,'msg'=>'缺少必要参数','data'=>'']);
+            }
+        }else{
+            return json(['status'=>2001,'msg'=>'请求方式错误','data'=>'']);
+        }
+
+    }
+
+
+
+    public function goodsRcode()
+    {
+        $user_id = $_REQUEST['user_id'];
+        //判断数据库是否存在相同二维码
+        $rcodedata = Db::table('ml_tbl_rcode')->where('goods_id', $user_id)->find();
+        if ($rcodedata) {
+            $data = array('status' => 0, 'msg' => '成功', 'data' => array('rcodeurl' => $rcodedata['url']));
+        } else {
+            $fielname = rand(100, 99999) . $user_id . '.png';
+            // 为二维码创建一个文件
+            $fiel = $_SERVER['DOCUMENT_ROOT'] . '/ttgoodssharercode/' . $fielname;
+            //获取access_token
+            $appid = PublicEnum::WX_APPID;
+            $srcret = PublicEnum::WX_SECRET;
+            $url = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=' . $appid . '&secret=' . $srcret;
+            // get请求获取access_token
+            $data = $this->getCurl($url);
+            $data = json_decode($data, true);
+            //获取二维码
+            //参数
+            $postdata['scene'] = "goodsid=" . $user_id;
+            // 宽度
+            $postdata['width'] = 430;
+            // 页面
+            $postdata['page'] = 'packageA/details/details';
+            // 线条颜色
+            $postdata['auto_color'] = false;
+            //auto_color 为 false 时生效
+            $postdata['line_color'] = ['r' => '0', 'g' => '0', 'b' => '0'];
+
+            // 是否有底色为true时是透明的
+            $postdata['is_hyaline'] = false;
+            $post_data = json_encode($postdata);
+            // 获取二维码
+            $url = "https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=" . $data['access_token'];
+            // post请求
+            $result = $this->postCurl($url, $post_data);
+            // 保存二维码
+
+            file_put_contents($fiel, $result);
+            $fileurl = 'https://tuitui.tango007.com/ttgoodssharercode/' . $fielname;
+            $intodata = array('upid' => $user_id,  'url' => $fileurl);
+            Db::table('ml_tbl_rcode')->insert($intodata);
+            $data = array('status' => 0, 'msg' => '成功', 'data' => array('rcodeurl' => $fileurl));
+        }
+        return json($data);
+    }
+
+    public function subUserList(Request $request)
+    {
+        if ($request->isPost()){
+            $all = $request->param();
+            if (isset($all['user_id']) && !empty($all['user_id'])){
+
+                $data['useInfo'] = Db::name('ml_tbl_user')->where('id',$all['user_id'])->field('id,user_name,user_phone')->find();
+                $user_code = Db::query('SELECT xu.user_code FROM ml_xm_binding as mx join xm_tbl_user as xu WHERE mx.xm_user_id = xu.id and mx.ml_user_id = ?',[$all['user_id']]);
+                if (!empty($user_code[0]['user_code'])){
+                    $res = Db::name('xm_tbl_user')->where('up_code',$user_code[0]['user_code'])->field('id')->select();
+                    $ids = "";
+                    foreach ($res as $k=>$v){
+                        $ids .= $v['id'] . ",";
+                    }
+                    $ids = rtrim($ids,',');
+                }else{
+                    $ids = '';
+                }
+                if (isset($ids) && !empty($ids)) {
+                    $user_order_id = Db::name('ml_xm_binding')->whereIn('xm_user_id', $ids)->field('ml_user_id')->select();
+                    $oids = '';
+                    foreach ($user_order_id as $k => $v) {
+                        $oids .= $v['ml_user_id'] . ',';
+                    }
+                    $oids = rtrim($oids,',');
+                    $info = Db::name('ml_tbl_user')->whereIn('id',$oids)->select();
+                    return json(['status'=>1001,'msg'=>'成功','data'=>$info]);
+                }else{
+                    return json(['status'=>2003,'msg'=>'成功','data'=>'']);
+
+                }
+            }else{
+                return json(['status'=>2002,'msg'=>'参数错误','data'=>'']);
+            }
+        }else{
+            return json(['status'=>2001,'msg'=>'方法错误','data'=>'']);
+        }
+
+    }
+
+
+    function getCurl($url)
+    {
+        $info = curl_init();
+        curl_setopt($info, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($info, CURLOPT_HEADER, 0);
+        curl_setopt($info, CURLOPT_NOBODY, 0);
+        curl_setopt($info, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($info, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($info, CURLOPT_URL, $url);
+        $output = curl_exec($info);
+        curl_close($info);
+        return $output;
+    }
+
+    function postCurl($url, $data)
+    {
+        $ch = curl_init();
+        $header[] = "Accept-Charset: utf-8";
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (compatible; MSIE 5.01; Windows NT 5.0)');
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+        curl_setopt($ch, CURLOPT_AUTOREFERER, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $tmpInfo = curl_exec($ch);
+        if (curl_errno($ch)) {
+            return false;
+        } else {
+            return $tmpInfo;
+        }
+    }
+
+
 
 }
