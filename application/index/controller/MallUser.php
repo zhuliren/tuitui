@@ -478,7 +478,7 @@ class MallUser
     {
         $user_id = $_REQUEST['user_id'];
         //判断数据库是否存在相同二维码
-        $rcodedata = Db::table('ml_tbl_rcode')->where('goods_id', $user_id)->find();
+        $rcodedata = Db::table('ml_tbl_rcode')->where('upid', $user_id)->find();
         if ($rcodedata) {
             $data = array('status' => 0, 'msg' => '成功', 'data' => array('rcodeurl' => $rcodedata['url']));
         } else {
