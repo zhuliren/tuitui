@@ -70,4 +70,31 @@ class UserModel extends Model
             return false;
         }
     }
+
+
+    public function getDistributionMoney($user_id)
+    {
+        $xm_id = Db::name('ml_xm_binding')->where('ml_user_id', $user_id)->value('xm_user_id');
+        $id_list = Db::name('ml_tbl_channel')->where('xm_user_id', $xm_id)->field('ml_user_id')->select();
+        $ids = '';
+        foreach ($id_list as $k => $v) {
+            $ids .= $v['ml_user_id'] . ',';
+        }
+        $ids = rtrim($ids,',');
+        $list = Db::name('ml_tbl_order')->whereIn('user_id',$ids)->whereIn('order_type','1,2,3')->select();
+
+        $goodsId = '';
+        foreach ($list as $k=>$v){
+            $goodsId .= $v['id'] . ',';
+        }
+        $goodsId = rtrim($goodsId,',');
+        $goodsDetail = Db::name('ml_tbl_order_details')->whereIn('order_zid', $goodsId)->field('goods_id,goods_num')->select();
+
+        $distriMoney = 0;
+        foreach ($goodsDetail as $k=>$v){
+            $bouns_price = Db::name('ml_tbl_goods')->where('id', $v['goods_id'])->value('bonus_price');
+            $distriMoney += $bouns_price * $v['goods_num'];
+        }
+        return $distriMoney;
+    }
 }

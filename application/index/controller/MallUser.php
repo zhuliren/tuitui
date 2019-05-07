@@ -235,6 +235,7 @@ class MallUser
         $userModel = new UserModel();
         $isbinding = $userModel->mlxmBinding($user_id);
         $issalesman = Db::table('ml_tbl_user')->where('id', $user_id)->find();
+        $myDistriMoney = $userModel->getDistributionMoney($user_id);
         if ($isbinding) {
             //获取用户在推推项目的id
             $selectxmuserid = Db::table('ml_xm_binding')->where('ml_user_id', $user_id)->find();
@@ -245,9 +246,9 @@ class MallUser
             } else {
                 $coupon_num = 0;
             }
-            $returndata = array('coupon_num' => $coupon_num, 'user_id' => $user_id, 'isbinding' => 1, 'issalesman' => $issalesman['is_salesman']);
+            $returndata = array('coupon_num' => $coupon_num, 'user_id' => $user_id, 'isbinding' => 1, 'issalesman' => $issalesman['is_salesman'], 'myDistriMoney'=>$myDistriMoney);
         } else {
-            $returndata = array('coupon_num' => 0, 'user_id' => $user_id, 'isbinding' => 1, 'issalesman' => $issalesman['is_salesman']);
+            $returndata = array('coupon_num' => 0, 'user_id' => $user_id, 'isbinding' => 1, 'issalesman' => $issalesman['is_salesman'], 'myDistriMoney'=>$myDistriMoney);
         }
         $data = array('status' => 1, 'msg' => '未绑定', 'data' => $returndata);
         return json($data);
@@ -315,39 +316,24 @@ class MallUser
      */
     public function myOrderNum(Request $request)
     {
-
-        $user_id = $request->param('user_id','');
-        if (isset($user_id) && !empty($user_id)){
-            $user_code = Db::query('SELECT xu.user_code FROM ml_xm_binding as mx join xm_tbl_user as xu WHERE mx.xm_user_id = xu.id and mx.ml_user_id = ?',[$user_id]);
-            if (!empty($user_code[0]['user_code'])){
-                $res = Db::name('xm_tbl_user')->where('up_code',$user_code[0]['user_code'])->field('id')->select();
-                $ids = "";
-                foreach ($res as $k=>$v){
-                    $ids .= $v['id'] . ",";
-                }
-                $ids = rtrim($ids,',');
-            }else{
-                $ids = '';
+        $all = $request->param();
+        if (isset($all['user_id']) && !empty($all['user_id'])) {
+            $xm_id = Db::name('ml_xm_binding')->where('ml_user_id', $all['user_id'])->value('xm_user_id');
+            $id_list = Db::name('ml_tbl_channel')->where('xm_user_id', $xm_id)->field('ml_user_id')->select();
+            $ids = '';
+            foreach ($id_list as $k => $v) {
+                $ids .= $v['ml_user_id'] . ',';
             }
-            if (isset($ids) && !empty($ids)) {
-                $user_order_id = Db::name('ml_xm_binding')->whereIn('xm_user_id', $ids)->field('ml_user_id')->select();
-                $oids = '';
-                foreach ($user_order_id as $k => $v) {
-                    $oids .= $v['ml_user_id'] . ',';
-                }
-                $oids = rtrim($oids, ',');
-                $goodsId = Db::name('ml_tbl_order')->whereIn('user_id', $oids)->field('id')->select();
-                $orderNum = count($goodsId);
-
-            }else{
-                $orderNum = 0;
+            $ids = rtrim($ids,',');
+            $list = Db::name('ml_tbl_order')->whereIn('user_id',$ids)->count();
+            if ($list > 0) {
+                return json(['status' => 1001, 'msg' => '成功', 'data' => $list]);
+            } else {
+                return json(['status' => 1001, 'msg' => '成功', 'data' => 0]);
             }
-            $data = array('status'=>1,'msg'=>'成功','data'=>$orderNum);
-            return json($data);
         }else{
             return json(array('status'=>0,'msg'=>'参数错误','data'=>''));
         }
-
     }
 
 
@@ -358,45 +344,37 @@ class MallUser
             return json(array('status'=>0,'msg'=>'参数错误','data'=>''));
         }
         $data['useInfo'] = Db::name('ml_tbl_user')->where('id',$all['user_id'])->field('id,user_name,user_phone')->find();
-        $user_code = Db::query('SELECT xu.user_code FROM ml_xm_binding as mx join xm_tbl_user as xu WHERE mx.xm_user_id = xu.id and mx.ml_user_id = ?',[$all['user_id']]);
-        if (!empty($user_code[0]['user_code'])){
-            $res = Db::name('xm_tbl_user')->where('up_code',$user_code[0]['user_code'])->field('id')->select();
-            $ids = "";
-            foreach ($res as $k=>$v){
-                $ids .= $v['id'] . ",";
-            }
-            $ids = rtrim($ids,',');
-        }else{
-            $ids = '';
+
+        $xm_id = Db::name('ml_xm_binding')->where('ml_user_id', $all['user_id'])->value('xm_user_id');
+        $id_list = Db::name('ml_tbl_channel')->where('xm_user_id', $xm_id)->field('ml_user_id')->select();
+        $ids = '';
+        foreach ($id_list as $k => $v) {
+            $ids .= $v['ml_user_id'] . ',';
         }
-        if (isset($ids) && !empty($ids)) {
-            $user_order_id = Db::name('ml_xm_binding')->whereIn('xm_user_id', $ids)->field('ml_user_id')->select();
-            $oids = '';
-            foreach ($user_order_id as $k => $v) {
-                $oids .= $v['ml_user_id'] . ',';
-            }
-            $oids = rtrim($oids, ',');
-            $goodsId = Db::name('ml_tbl_order')->whereIn('user_id', $oids)->field('id,pay_time')->select();
-            $data['orderNum'] = count($goodsId);
-            $gids = '';
-            $pat_time = '';
-            foreach ($goodsId as $k => $v) {
-                $gids .= $v['id'] . ',';
-                if (!empty($v['pay_time']) && ($pat_time < $v['pay_time'])) {
-                    $pat_time = $v['pay_time'];
-                }
-            }
-            $data['the_last_order'] = $pat_time;
-            $gids = rtrim($gids, ',');
-            $goodsDetail = Db::name('ml_tbl_order_details')->whereIn('order_zid', $gids)->field('goods_id,goods_num')->select();
-            $data['distriMoney'] = 0;
-            foreach ($goodsDetail as $k => $v) {
-                $bouns_price = Db::name('ml_tbl_goods')->where('id', $v['goods_id'])->field('bonus_price')->find();
-                $data['distriMoney'] += $bouns_price['bonus_price'] * $v['goods_num'];
-            }
-        }else{
-            $data = [];
+        $ids = rtrim($ids,',');
+        $list = Db::name('ml_tbl_order')->whereIn('user_id',$ids)->select();
+        $data['orderNum'] = count($list);
+
+        $out_list = Db::name('ml_tbl_order')->whereIn('user_id',$ids)->whereIn('order_type','1,2,3')->select();
+        $data['out_list'] = count($out_list);
+        $goodsId = '';
+        foreach ($out_list as $k=>$v){
+            $goodsId .= $v['id'] . ',';
         }
+        $goodsId = rtrim($goodsId,',');
+        $goodsDetail = Db::name('ml_tbl_order_details')->whereIn('order_zid', $goodsId)->field('goods_id,goods_num')->select();
+        $data['distriMoney'] = 0;
+        foreach ($goodsDetail as $k => $v) {
+            $bouns_price = Db::name('ml_tbl_goods')->where('id', $v['goods_id'])->field('bonus_price')->find();
+            $data['distriMoney'] += $bouns_price['bonus_price'] * $v['goods_num'];
+        }
+        $ctime = '';
+        foreach ($list as $k => $v) {
+            if (!empty($v['creat_time']) && ($ctime < $v['creat_time'])) {
+                $ctime = $v['creat_time'];
+            }
+        }
+        $data['the_last_order'] = $ctime;
         return json(['status'=>1001,'msg'=>'成功','data'=>$data]);
     }
 
@@ -421,8 +399,7 @@ class MallUser
         }else{
             return json(['status'=>0,'msg'=>'2失败','data'=>'']);
         }
-        $session_key = $this->getAccessToken($this->appid,$this->secret);
-
+        $session_key = $this->getAccessToken($this->appid,$this->secret,$all['code']);
         if (isset($all['iv']) && !empty($all['iv'])){
             $iv = $all['iv'];
         }else{
@@ -434,6 +411,7 @@ class MallUser
             return json(['status'=>0,'msg'=>'缺少encryptData参数','data'=>'']);
         }
         $user_id = $all['user_id'];
+
         $pc = new WXBizDataCrypt($this->appid,$session_key);
         $errCode = $pc->decryptData($encryptedData, $iv,$data );
         if ( $errCode == 0){
@@ -444,6 +422,23 @@ class MallUser
         }else{
             return json(['status'=>$errCode,'msg'=>'失败','data'=>'']);
         }
+    }
+
+    public function getSessionkey(Request $request)
+    {
+        if ($request->isPost()){
+            $all = $request->param();
+            $session_key = $this->getAccessToken($this->appid,$this->secret,$all['code']);
+            if ($session_key > 0){
+                return $session_key;
+            }else{
+                return array();
+            }
+
+        }else{
+            return json(['status'=>0,'msg'=>'方法错误','data'=>'']);
+        }
+
     }
 
     public function myWallet(Request $request)
@@ -475,7 +470,8 @@ class MallUser
     {
         $user_id = $_REQUEST['user_id'];
         //判断数据库是否存在相同二维码
-        $rcodedata = Db::table('ml_tbl_rcode')->where('upid', $user_id)->find();
+        $rcodedata = Db::table('ml_tbl_rcode')->where('upid', $user_id)->where('goods_id','')->find();
+//        dump($rcodedata);die;
         if ($rcodedata) {
             $data = array('status' => 0, 'msg' => '成功', 'data' => array('rcodeurl' => $rcodedata['url']));
         } else {
@@ -495,7 +491,7 @@ class MallUser
             // 宽度
             $postdata['width'] = 430;
             // 页面
-            $postdata['page'] = 'packageA/details/details';
+            $postdata['page'] = 'pages/index/index';
             // 线条颜色
             $postdata['auto_color'] = false;
             //auto_color 为 false 时生效
@@ -524,31 +520,18 @@ class MallUser
         if ($request->isPost()){
             $all = $request->param();
             if (isset($all['user_id']) && !empty($all['user_id'])){
-
-                $data['useInfo'] = Db::name('ml_tbl_user')->where('id',$all['user_id'])->field('id,user_name,user_phone')->find();
-                $user_code = Db::query('SELECT xu.user_code FROM ml_xm_binding as mx join xm_tbl_user as xu WHERE mx.xm_user_id = xu.id and mx.ml_user_id = ?',[$all['user_id']]);
-                if (!empty($user_code[0]['user_code'])){
-                    $res = Db::name('xm_tbl_user')->where('up_code',$user_code[0]['user_code'])->field('id')->select();
-                    $ids = "";
-                    foreach ($res as $k=>$v){
-                        $ids .= $v['id'] . ",";
-                    }
-                    $ids = rtrim($ids,',');
-                }else{
-                    $ids = '';
+                $xm_id = Db::name('ml_xm_binding')->where('ml_user_id',$all['user_id'])->value('xm_user_id');
+                $id_list = Db::name('ml_tbl_channel')->where('xm_user_id',$xm_id)->field('ml_user_id')->select();
+                $ids = '';
+                foreach ($id_list as $k=>$v){
+                    $ids .= $v['ml_user_id']. ',';
                 }
-                if (isset($ids) && !empty($ids)) {
-                    $user_order_id = Db::name('ml_xm_binding')->whereIn('xm_user_id', $ids)->field('ml_user_id')->select();
-                    $oids = '';
-                    foreach ($user_order_id as $k => $v) {
-                        $oids .= $v['ml_user_id'] . ',';
-                    }
-                    $oids = rtrim($oids,',');
-                    $info = Db::name('ml_tbl_user')->whereIn('id',$oids)->select();
-                    return json(['status'=>1001,'msg'=>'成功','data'=>$info]);
+                $ids = rtrim($ids,',');
+                $list = Db::name('ml_tbl_user')->whereIn('id',$ids)->select();
+                if ($list > 0){
+                    return json(['status'=>1001,'msg'=>'成功','data'=>$list]);
                 }else{
-                    return json(['status'=>2003,'msg'=>'成功','data'=>'']);
-
+                    return json(['status'=>1001,'msg'=>'成功','data'=>'']);
                 }
             }else{
                 return json(['status'=>2002,'msg'=>'参数错误','data'=>'']);
@@ -556,7 +539,43 @@ class MallUser
         }else{
             return json(['status'=>2001,'msg'=>'方法错误','data'=>'']);
         }
+    }
 
+    /**
+     * @param Request $request
+     * @return \think\response\Json
+     * @time: 2019/5/7
+     * @autor: duheyuan
+     * @throws \think\Exception
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     * @throws \think\exception\PDOException
+     * 订单状态修改
+     */
+    public function cancelOrder(Request $request)
+    {
+        if($request->isPost()){
+            $order_id = $request->param('order_id');
+
+            if (isset($order_id) && !empty($order_id)){
+                $order_status = Db::name('ml_tbl_order')->where('id',$order_id)->whereIn('order_type','1,2,3')->find();
+                if ($order_status > 0){
+                    return json(['status'=>2001,'msg'=>'该订单不可取消','data'=>'']);
+                }else{
+                    $cancel = Db::name('ml_tbl_order')->where('order_id',$order_id)->where('order_type','0')->update(['order_type'=>4]);
+                    if ($cancel > 0){
+                        return json(['status'=>1001,'msg'=>'订单修改成功','data'=>'成功']);
+                    }else{
+                        return json(['status'=>2002,'msg'=>'订单状态错误','data'=>'']);
+                    }
+                }
+            }else{
+                return json(['status'=>2003,'msg'=>'参数错误','data'=>'']);
+            }
+        }else{
+            return json(['status'=>2004,'msg'=>'方法错误','data'=>'']);
+        }
     }
 
 
@@ -597,14 +616,17 @@ class MallUser
     }
 
 
-    public function getAccessToken($appid,$secret){
-        $url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=$appid&secret=$secret";
+    public function getAccessToken($appid,$secret,$js_code){
+
+        $url = "https://api.weixin.qq.com/sns/jscode2session?appid=$appid&secret=$secret&js_code=$js_code&grant_type=authorization_code";
         $res = $this->curl_get($url);
         $res = json_decode($res,1);
         if (isset($res['errcode'])){
-            if($res['errcode']!=0) throw new Exception($res['errmsg']);
+            if ($res['errcode'] != 0){
+                return json(['status'=>$res['errmsg'],'msg'=>'失败','data'=>'']);
+            }
         }
-        return $res['access_token'];
+        return $res['session_key'];
     }
     public function curl_get($url)
     {

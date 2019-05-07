@@ -110,6 +110,8 @@ Route::rule('deCryptData', 'index/MallUser/deCryptData');
 Route::rule('myWallet', 'index/MallUser/myWallet');
 Route::rule('goodsRcode', 'index/MallUser/goodsRcode');
 Route::rule('subUser', 'index/MallUser/subUserList');
+Route::rule('getSessionkey', 'index/MallUser/getSessionkey');
+Route::rule('cancelOrder', 'index/MallUser/cancelOrder');
 
 
 
