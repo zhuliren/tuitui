@@ -21,8 +21,8 @@ class Mall
         $start = $page * $limit;
         if ($goods_class == 1) {
             //商品列表
-            $selectgoods = Db::table('ml_tbl_goods')->where('is_online', 1)->limit($start, $limit)
-                ->column('id,head_img,goods_name,goods_format,goods_region,goods_stock,bonus_price,goods_price,goods_original_price,goods_sell_out');
+            $selectgoods = Db::table('ml_tbl_goods')->where('is_online', 1)->limit($start, $limit)->order('goods_sort','desc')
+                ->field('id,head_img,goods_name,goods_format,goods_region,goods_stock,bonus_price,goods_price,goods_original_price,goods_sell_out,goods_sort')->select();
             if ($selectgoods) {
                 $data = array('status' => 0, 'msg' => '成功', 'data' => $selectgoods);
                 return json($data);
@@ -31,8 +31,8 @@ class Mall
                 return json($data);
             }
         } else {
-            $selectgoods = Db::table('ml_tbl_goods')->where('is_online', 1)->where('goods_class', $goods_class)->limit($start, $limit)
-                ->column('id,head_img,goods_name,goods_format,goods_region,goods_stock,bonus_price,goods_price,goods_original_price,goods_sell_out');
+            $selectgoods = Db::table('ml_tbl_goods')->where('is_online', 1)->where('goods_class', $goods_class)->limit($start, $limit)->order('goods_sort','desc')
+                ->field('id,head_img,goods_name,goods_format,goods_region,goods_stock,bonus_price,goods_price,goods_original_price,goods_sell_out')->select();
             if ($selectgoods) {
                 $data = array('status' => 0, 'msg' => '成功', 'data' => $selectgoods);
                 return json($data);

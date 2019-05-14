@@ -9,11 +9,12 @@
 namespace app\index\controller;
 
 
+use app\index\Controller;
 use app\index\model\MallBonus;
 use app\index\model\MallUserWallet;
 use think\Db;
 
-class MallOrder
+class MallOrder extends Controller
 {
     public function shopCarDetails()
     {
@@ -129,8 +130,12 @@ class MallOrder
         //TODO 购物车下单未修改库存
         $user_id = $_REQUEST['userid'];
         $goods_list_string = $_REQUEST['goodslist'];
-        $user_name = $_REQUEST['username'];
-        $phone = $_REQUEST['phone'];
+        $user_name = filter_Emoji($_REQUEST['username']);
+        if (preg_mobile($_REQUEST['phone'])){
+            $phone = $_REQUEST['phone'];
+        }else{
+            return json(['status'=>1,'msg'=>'手机号码格式不正确','data'=>'']);
+        }
         $address = $_REQUEST['address'];
         $house_num = $_REQUEST['house_num'];
         $coupon_id = $_REQUEST['coupon_id'];
@@ -193,8 +198,12 @@ class MallOrder
         $user_id = $_REQUEST['userid'];
         $goods_id = $_REQUEST['goodsid'];
         $goods_num = $_REQUEST['goodsnum'];
-        $user_name = $_REQUEST['username'];
-        $phone = $_REQUEST['phone'];
+        $user_name = filter_Emoji($_REQUEST['username']);
+        if (preg_mobile($_REQUEST['phone'])){
+            $phone = $_REQUEST['phone'];
+        }else{
+            return json(['status'=>1,'msg'=>'手机号码格式不正确','data'=>'']);
+        }
         $address = $_REQUEST['address'];
         $house_num = $_REQUEST['house_num'];
         $coupon_id = $_REQUEST['coupon_id'];
@@ -209,19 +218,45 @@ class MallOrder
         $goods_sum = $goods_sum_price;
         $discount = 1;//折扣
         $par_val = 0;//减免金额
+        $freight = 0;
         if ($coupon_id != 'no') {
             //查询优惠券优惠价格
             $selectcoupon = Db::table('xm_tbl_coupon')->where('id', $coupon_id)->find();
             //判断优惠券类型
-            if ($selectcoupon['discount'] != 0) {
-                $discount = $selectcoupon['discount'];
+            if ($selectcoupon['coupon_type'] == 1){
+                $pay_price = $goods_sum * $selectcoupon['discount'];
+                if (isset($_REQUEST['pay_price']) && !empty($_REQUEST['pay_price']) ){
+                    $pay_price = number_format($pay_price,2);
+                    $sum_price = number_format($_REQUEST['pay_price'],2);
+                    if ($pay_price !==  $sum_price){
+                        return json(['status'=>0,'msg'=>'计算金额出错','data'=>'']);
+                    }
+                }else{
+                    return json(['status'=>0,'msg'=>'参数出错','data'=>'']);
+
+                }
+            }else{
+                $pay_price = $goods_sum - $selectcoupon['par_value'];
+                if (isset($_REQUEST['pay_price']) && !empty($_REQUEST['pay_price']) ){
+                    $pay_price = number_format($pay_price,2);
+                    $sum_price = number_format($_REQUEST['pay_price'],2);
+                    if ($pay_price !==  $sum_price){
+                        return json(['status'=>0,'msg'=>'计算金额出错','data'=>'']);
+                    }
+                }else{
+                    return json(['status'=>0,'msg'=>'参数出错','data'=>'']);
+                }
             }
-            $par_val = $selectcoupon['par_value'];
+            //判断优惠券类型
+//            if ($selectcoupon['discount'] != 0) {
+//                $discount = $selectcoupon['discount'];
+//            }
+//            $par_val = $selectcoupon['par_value'];
+        }else{
+            //运费计算
+            //计算订单需支付金额
+            $pay_price = ($goods_sum - $par_val) * $discount - $freight;
         }
-        //运费计算
-        $freight = 0;
-        //计算订单需支付金额
-        $pay_price = ($goods_sum - $par_val) * $discount - $freight;
         //创建订单
         $order_type = 0;
         if ($coupon_id != 'no') {
@@ -255,8 +290,12 @@ class MallOrder
         $user_id = $_REQUEST['userid'];
         $goods_id = $_REQUEST['goodsid'];
         $goods_num = $_REQUEST['goodsnum'];
-        $user_name = $_REQUEST['username'];
-        $phone = $_REQUEST['phone'];
+        $user_name = filter_Emoji($_REQUEST['username']);
+        if (preg_mobile($_REQUEST['phone'])){
+            $phone = $_REQUEST['phone'];
+        }else{
+            return json(['status'=>1,'msg'=>'手机号码格式不正确','data'=>'']);
+        }
         $coupon_id = $_REQUEST['coupon_id'];
         //生成订单id
         $order_id = $user_id . date('Ymd') . substr(implode(NULL, array_map('ord', str_split(substr(uniqid(), 7, 13), 1))), 0, 8);
@@ -270,19 +309,45 @@ class MallOrder
         $goods_sum = $goods_sum_price;
         $discount = 1;//折扣
         $par_val = 0;//减免金额
+        //运费计算
+        $freight = 0;
         if ($coupon_id != 'no') {
             //查询优惠券优惠价格
             $selectcoupon = Db::table('xm_tbl_coupon')->where('id', $coupon_id)->find();
             //判断优惠券类型
-            if ($selectcoupon['discount'] != 0) {
-                $discount = $selectcoupon['discount'];
+            if ($selectcoupon['coupon_type'] == 1){
+                $pay_price = $goods_sum * $selectcoupon['discount'];
+                if (isset($_REQUEST['pay_price']) && !empty($_REQUEST['pay_price']) ){
+                    $pay_price = number_format($pay_price,2);
+                    $sum_price = number_format($_REQUEST['pay_price'],2);
+                    if ($pay_price !==  $sum_price){
+                        return json(['status'=>0,'msg'=>'计算金额出错','data'=>'']);
+                    }
+                }else{
+                    return json(['status'=>0,'msg'=>'参数出错','data'=>'']);
+                }
+            }else{
+                $pay_price = $goods_sum - $selectcoupon['par_value'];
+                if (isset($_REQUEST['pay_price']) && !empty($_REQUEST['pay_price']) ){
+                    $pay_price = number_format($pay_price,2);
+                    $sum_price = number_format($_REQUEST['pay_price'],2);
+                    if ($pay_price !==  $sum_price){
+                        return json(['status'=>0,'msg'=>'计算金额出错','data'=>'']);
+                    }
+                }else{
+                    return json(['status'=>0,'msg'=>'参数出错','data'=>'']);
+
+                }
             }
-            $par_val = $selectcoupon['par_value'];
+//            dump($selectcoupon);die;
+//            if ($selectcoupon['discount'] != 0) {
+//                $discount = $selectcoupon['discount'];
+//            }
+//            $par_val = $selectcoupon['par_value'];
+        }else{
+            //计算订单需支付金额
+            $pay_price = ($goods_sum - $par_val) * $discount - $freight;
         }
-        //运费计算
-        $freight = 0;
-        //计算订单需支付金额
-        $pay_price = ($goods_sum - $par_val) * $discount - $freight;
         //创建订单
         $order_type = 0;
         if ($coupon_id != 'no') {

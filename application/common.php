@@ -10,3 +10,24 @@
 // +----------------------------------------------------------------------
 
 // 应用公共文件
+
+// 过滤掉emoji表情
+function filter_Emoji($str)
+{
+    $str = preg_replace_callback(    //执行一个正则表达式搜索并且使用一个回调进行替换
+        '/./u',
+        function (array $match) {
+            return strlen($match[0]) >= 4 ? '' : $match[0];
+        },
+        $str);
+
+    return $str;
+}
+
+function preg_mobile($mobile) {
+    if(preg_match("/^1[34578]\d{9}$/", $mobile)) {
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+}

@@ -112,6 +112,24 @@ Route::rule('goodsRcode', 'index/MallUser/goodsRcode');
 Route::rule('subUser', 'index/MallUser/subUserList');
 Route::rule('getSessionkey', 'index/MallUser/getSessionkey');
 Route::rule('cancelOrder', 'index/MallUser/cancelOrder');
+Route::rule('shareGoods', 'index/MallGoods/shareGoods');
+Route::rule('getUndoneOrder', 'index/MallBusiness/getUndoneOrder');
+Route::rule('updateOrder', 'index/MallBusiness/updateOrderType');
+Route::rule('xmWechatPay', 'index/WechatPay/xmWechatPay');
+Route::rule('goodsAdd', 'index/MallGoods/goodsAdd');
+Route::rule('goodsImgUpload', 'index/MallGoods/shareImgUpload');
+Route::rule('namePreg', 'index/MallUser/namePreg');
+
+Route::rule('getMyCoupon', 'index/UserCoupon/getMyCoupon');//获取我的优惠券
+
+
+Route::rule('getTicketGoods', 'index/Ticket123/getSingleGoods');//获取我的优惠券
+Route::rule('tGoodsList', 'index/Ticket123/getMenPiaoGoodslist');//获取我的优惠券
+
+
+
+
+
 
 
 

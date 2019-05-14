@@ -20,6 +20,7 @@ class ProCard
         $userModel = new UserModel();
         //判断用户属性
         $user_type = $userModel->userIdentity($user_id);
+//        dump($user_type);die;
         switch ($user_type) {
             case -1:
                 $data = array('status' => 1, 'msg' => '用户不存在', 'data' => '');

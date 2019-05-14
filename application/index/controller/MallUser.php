@@ -388,13 +388,13 @@ class MallUser
     public function deCryptData(Request $request)
     {
         $all = $request->param();
-        if (!empty($all['nickName'])){
+        if (isset($all['nickName']) &&!empty($all['nickName'])){
             $user_name = $all['nickName'];
         }else{
             return json(['status'=>0,'msg'=>'1失败','data'=>'']);
         }
 
-        if (!empty($all['avatarUrl'])){
+        if (isset($all['nickName']) && !empty($all['avatarUrl'])){
             $avatarUrl = $all['avatarUrl'];
         }else{
             return json(['status'=>0,'msg'=>'2失败','data'=>'']);
@@ -531,7 +531,7 @@ class MallUser
                 if ($list > 0){
                     return json(['status'=>1001,'msg'=>'成功','data'=>$list]);
                 }else{
-                    return json(['status'=>1001,'msg'=>'成功','data'=>'']);
+                    return json(['status'=>1002,'msg'=>'成功','data'=>'']);
                 }
             }else{
                 return json(['status'=>2002,'msg'=>'参数错误','data'=>'']);
@@ -650,6 +650,27 @@ class MallUser
             return false;
         }
     }
+
+    // 名字正则
+    public function namePreg(Request $request)
+    {
+        if ($request->isPost()){
+            $all = $request->param();
+            if (isset($all['realname']) && !empty($all['realname'])){
+                if (preg_match("/^[\x{4e00}-\x{9fa5}]{3,6}$/u",$all['realname'])) {
+                    return true;
+                } else {
+                    return false;
+//                    print("非中文");
+                }
+            }
+        }else{
+            return json(['status'=>2001,'msg'=>'请求方法出错','data'=>'']);
+        }
+
+
+    }
+
 
 
 

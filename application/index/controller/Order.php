@@ -69,6 +69,7 @@ class Order
         $order_price = $pro_card_price * $pro_card_num;
         $orderdata = ['order_id' => $order_id, 'user_id' => $user_id, 'pro_id' => $pro_id, 'pro_card_id' => $pro_card_id, 'pro_card_num' => $pro_card_num, 'order_price' => $order_price,];
         Db::table('xm_tbl_order')->insert($orderdata);
+        Db::table('ml_xm_order_summary')->insert(['order_id'=>$order_id,'type'=>1,'creat_time'=>date('Y-m-d H:m:s',time())]);
         $returndata = array('order_id' => $order_id);
         $data = array('status' => 0, 'msg' => '成功', 'data' => $returndata);
         return json($data);
