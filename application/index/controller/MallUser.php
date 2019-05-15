@@ -658,10 +658,11 @@ class MallUser
             $all = $request->param();
             if (isset($all['realname']) && !empty($all['realname'])){
                 if (preg_match("/^[\x{4e00}-\x{9fa5}]{3,6}$/u",$all['realname'])) {
-                    return true;
+                    print("中文");
+//                    return true;
                 } else {
-                    return false;
-//                    print("非中文");
+//                    return false;
+                    print("非中文");
                 }
             }
         }else{

@@ -8,6 +8,9 @@
 
 namespace app\index\controller;
 
+header("Access-Control-Allow-Origin:*");
+/*星号表示所有的域都可以接受，*/
+header("Access-Control-Allow-Methods:GET,POST");
 
 use think\Controller;
 use think\Db;
@@ -15,6 +18,7 @@ use think\Request;
 
 class MallGoods extends Controller
 {
+
     public function creatGoods()
     {
         $head_img = $_REQUEST['head_img'];//头像
@@ -149,49 +153,46 @@ class MallGoods extends Controller
         }
     }
 
-
-    public function shareImgUpload()
+    public function shareImgUpload(Request $request)
     {
-        $max_size = 1000000;                                    //上传文件最大值
-        $allow_type = array('gif','png','jpg','jpeg');
-        $file = $_SERVER['DOCUMENT_ROOT'] . '/ttimg/';
-        if(!is_dir($file)){
-            mkdir($file);
-        }
-        //判断文件是否上传成功
-        if($_FILES['myfile']['error']){
-                 echo "文件上传失败<br>";
-             switch($_FILES['myfile']['error']){
-                   case 1: die('上传的文件超出系统的最大值<br>');break;
-                   case 2: die('上传的文件超出表单允许的最大值<br>');break;
-                   case 3: die('文件只有部分被上传<br>');break;
-                   case 4: die('没有上传任何文件<br>');break;
-                   default: die('未知错误<br>');break;
-             }
-        }
+        $type = 1;
+        $url = $request->param('img');
 
-        $hz = array_pop(explode('.',$_FILES['myfile']['name']));
-        if(!in_array($hz,$allow_type)){
-            die("该类型不允许上传<br>");
+        $ext=strrchr($url,'.');
+        if($ext!='.gif'&&$ext!='.jpg'){
+            return array('file_name'=>'','save_path'=>'','error'=>3);
         }
+        $filename= rand(1000,9999).time().$ext;
 
-        //判断文件是否超过允许的大小
-         if($max_size < $_FILES['myfile']['size']){
-                 die("文件超出PHP允许的最大值<br>");
-         }
-        //为了防止文件名重复，在系统中使用新名称
-        $save_file_name = date('YmdHis').rand(100,900).'.'.$hz;
-        //判断是否为HTTP POST上传的，如果是则把文件从临时目录移动到保存目录，并输出保存的信息
-        if(is_uploaded_file($_FILES['myfile']['tmp_name'])){
-            if(move_uploaded_file($_FILES['myfile']['tmp_name'],$file.'/'.$save_file_name)){
-                echo "上传成功!<br>文件{$_FILES['myfile']['name']}保存在{$file}/{$save_file_name}!<br>";
-            }else{
-                echo "文件移动失败!<br>";
-            }
+//        if(0!==strrpos($save_dir,'/')){
+//            $save_dir.='/';
+//        }
+        $save_dir = $_SERVER['DOCUMENT_ROOT'] . '/ttimg/';
+        //创建保存目录
+        if(!file_exists($save_dir)&&!mkdir($save_dir,0777,true)){
+            return array('file_name'=>'','save_path'=>'','error'=>5);
+        }
+        //获取远程文件所采用的方法
+        if($type){
+            $ch=curl_init();
+            $timeout=5;
+            curl_setopt($ch,CURLOPT_URL,$url);
+            curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+            curl_setopt($ch,CURLOPT_CONNECTTIMEOUT,$timeout);
+            $img=curl_exec($ch);
+            curl_close($ch);
         }else{
-            die("文件{$_FILES['myfile']['name']}不是一个HTTP POST上传的合法文件");
+            ob_start();
+            readfile($url);
+            $img=ob_get_contents();
+            ob_end_clean();
         }
-
+        //文件大小
+        $fp2=@fopen($save_dir.$filename,'a');
+        fwrite($fp2,$img);
+        fclose($fp2);
+        unset($img,$url);
+        return json(array('file_name'=>$filename,'save_path'=>$save_dir.$filename,'error'=>0));
     }
 
 }
