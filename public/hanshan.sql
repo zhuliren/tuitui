@@ -80,3 +80,5 @@ ALTER TABLE ml_tbl_goods ADD COLUMN `share_img` varchar(255)  DEFAULT null COMME
 ALTER TABLE ml_tbl_user ADD unique(`wechat_open_id`)
 
 
+ALTER TABLE ml_tbl_goods ADD COLUMN `must_img` varchar(255)  DEFAULT null COMMENT '必买商品图片';
+

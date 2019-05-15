@@ -10,6 +10,7 @@ namespace app\index\controller;
 
 
 use think\Db;
+use think\Request;
 
 class Mall
 {
@@ -82,5 +83,22 @@ class Mall
             $data = array('status' => 1, 'msg' => '无数据', 'data' => '');
             return json($data);
         }
+    }
+
+    public function getMustbuyGoods(Request $request)
+    {
+        if ($request->isPost()){
+
+            $res = Db::name('ml_tbl_goods')->where('is_online',1)->where('goods_sort',99)->limit(5)->field('id,goods_name,goods_stock,ex_time,bonus_price,goods_price,goods_original_price,must_img')->select();
+
+            if ($res > 0){
+                return json(['status'=>1001,'msg'=>'成功','data'=>$res]);
+            }else{
+                return json(['status'=>2001,'msg'=>'无数据','data'=>'']);
+            }
+        }else{
+            return json(['status'=>2002,'msg'=>'方法错误','data'=>'']);
+        }
+
     }
 }
