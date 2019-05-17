@@ -129,6 +129,10 @@ Route::rule('tGoodsList', 'index/Ticket123/getMenPiaoGoodslist');//获取我的�
 
 //TODO 新商城首页接口  20190515
 Route::rule('mustBuy', 'index/Mall/getMustbuyGoods');
+Route::rule('getGoodsList', 'index/Mall/getGoodsClassList');
+Route::rule('getClassList', 'index/Mall/getClassList');
+Route::rule('classGoodsList', 'index/Mall/classGoodsList');
+Route::rule('getRichText', 'index/MallGoods/getRichText');
 
 
 

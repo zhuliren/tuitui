@@ -29,8 +29,8 @@ class UserCoupon extends Controller
         if ($request->isPost()){
             $all = $request->param();
             if (isset($all['user_id']) && !empty($all['user_id'])){
-                $xm_id = Db::name('ml_xm_binding')->where('ml_user_id',$all['user_id'])->value('xm_user_id');
-                $listInfo = Db::name($this->table)->where('user_id',$xm_id)->select();
+//                $xm_id = Db::name('ml_xm_binding')->where('ml_user_id',$all['user_id'])->value('xm_user_id');
+                $listInfo = Db::name($this->table)->where('user_id',$all['user_id'])->select();
                 return json(['status'=>1001,'msg'=>'成功','data'=>$listInfo]);
             }else{
                 return json(['status'=>2002,'msg'=>'参数错误','data'=>'']);

@@ -165,9 +165,9 @@ class WechatPay
     {
         $order_id = $_REQUEST['orderid'];
         if (isset($_REQUEST['order_type']) && !empty($_REQUEST['order_type'])){
-            $order_type_ = $_REQUEST['order_type'];
+            $goods_type = $_REQUEST['order_type'];
         }else{
-            $order_type_ = 2;
+            $goods_type = 2;
         }
         $order_info = Db::table('ml_xm_order_summary')->where('order_id', $order_id)->find();
         $type = $order_info['type'];
@@ -190,7 +190,7 @@ class WechatPay
         $result = $this->FromXml($res);
         //判断返回结果
         if ($result['return_code'] == 'SUCCESS') {
-//            if (isset($result['trade_state']) == 'SUCCESS') {
+            if (isset($result['trade_state']) == 'SUCCESS') {
                 if ($type == 1) {
                     if (isset($_REQUEST['procardnum']) && !empty($_REQUEST['procardnum'])){
                         $goods_num = $_REQUEST['procardnum'];
@@ -227,8 +227,8 @@ class WechatPay
                 } elseif ($type == 2) {
                     //TODO 判断订单类型为核销的还是发货的
                     //TODO 目前暂定为核销类型订单
-                    if ($order_type_ == 1 ){
-                        $order_type = 5;
+                    if ($goods_type == 1 ){
+                        $order_type = 6;
                     }else{
                         $order_type = 2;
                     }
@@ -265,9 +265,9 @@ class WechatPay
                     }
                     $data = array('status' => 0, 'msg' => '成功', 'data' => '');
                 }
-//            } else {
-//                $data = array('status' => 1, 'msg' => '订单未支付', 'data' => '');
-//            }
+            } else {
+                $data = array('status' => 1, 'msg' => '订单未支付', 'data' => '');
+            }
         }else{
             $data = array('status' => 1, 'msg' => $result['err_code_des'], 'data' => '');
         }

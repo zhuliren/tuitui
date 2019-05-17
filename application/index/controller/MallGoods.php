@@ -8,10 +8,6 @@
 
 namespace app\index\controller;
 
-header("Access-Control-Allow-Origin:*");
-/*星号表示所有的域都可以接受，*/
-header("Access-Control-Allow-Methods:GET,POST");
-
 use think\Controller;
 use think\Db;
 use think\Request;
@@ -66,9 +62,6 @@ class MallGoods extends Controller
         if (isset($all['goods_price']) && empty($all['goods_price'])){
             return json(['status'=>0,'msg'=>'商品价格不可为空','data'=>'']);
         }
-        if (!isset($all['business_id']) || empty($all['business_id'])){
-            return json(['status'=>0,'msg'=>'商户id不可为空','data'=>'']);
-        }
         if (!isset($all['bonus_price']) || empty($all['bonus_price'])){
             return json(['status'=>0,'msg'=>'分销价格不可为空','data'=>'']);
         }
@@ -84,15 +77,7 @@ class MallGoods extends Controller
         if (!isset($all['ex_time']) || empty($all['ex_time'])){
             return json(['status'=>0,'msg'=>'商品到期时间不可为空','data'=>'']);
         }
-        if (!isset($all['third_id']) || empty($all['third_id'])){
-            return json(['status'=>0,'msg'=>'商品第三方系统编号不可为空','data'=>'']);
-        }
-        if (!isset($all['third_number']) || empty($all['third_number'])){
-            return json(['status'=>0,'msg'=>'商品第三方系统子编号不可为空','data'=>'']);
-        }
-        if (!isset($all['third_znumber']) || empty($all['third_znumber'])){
-            return json(['status'=>0,'msg'=>'商品规格id不可为空','data'=>'']);
-        }
+
         if (isset($all['banner']) && !empty($all['banner'])) {
             $banner = $all['banner'];
             unset($all['banner']);
@@ -107,10 +92,10 @@ class MallGoods extends Controller
             foreach ( $banner as $k=>$v){
                 $arr[] = [
                     'img_url'=>$v,
-                    'goodsid'=>$last_id,
+                    'goods_id'=>$last_id,
                 ];
             }
-        $res = Db::name('ml_tbl_goods_banner')->insert($arr);
+        $res = Db::name('ml_tbl_goods_banner')->insertAll($arr);
         }
         if (isset($res)){
             if ($last_id && $res){
@@ -143,7 +128,14 @@ class MallGoods extends Controller
             $all = $request->param();
             if (isset($all['goods_id']) && !empty($all['goods_id'])){
                 $data['goods_content'] = Db::name('ml_tbl_goods_content')->where('gid',$all['goods_id'])->value('content');
-                $data['goods_img'] = Db::name('ml_tbl_goods_img')->where('gid',$all['goods_id'])->limit(9)->order('id','desc')->select();
+                $goods_img = Db::name('ml_tbl_goods_img')->where('gid',$all['goods_id'])->limit(9)->order('id','desc')->select();
+                $data['goods_img'] = [];
+                foreach ( $goods_img as $k=>$v){
+                    if ($v['url']){
+                        $v['url'] = ltrim($v['url'],' ');
+                    }
+                    $data['goods_img'][] = $v;
+                }
                 return json(['status'=>1001,'msg'=>'成功','data'=>$data]);
             }else{
                 return json(['status'=>2001,'msg'=>'参数错误','data'=>'']);
@@ -159,7 +151,7 @@ class MallGoods extends Controller
         $url = $request->param('img');
 
         $ext=strrchr($url,'.');
-        if($ext!='.gif'&&$ext!='.jpg'){
+        if($ext!='.gif'&&$ext!='.jpg'&& $ext != '.png' && $ext != '.jpeg' ){
             return array('file_name'=>'','save_path'=>'','error'=>3);
         }
         $filename= rand(1000,9999).time().$ext;
@@ -192,7 +184,14 @@ class MallGoods extends Controller
         fwrite($fp2,$img);
         fclose($fp2);
         unset($img,$url);
-        return json(array('file_name'=>$filename,'save_path'=>$save_dir.$filename,'error'=>0));
+        return json(array('file_name'=>$filename,'save_path'=>'https://tuitui.tango007.com/ttimg/'.$filename,'error'=>0));
+    }
+
+
+    public function getRichText(Request $request)
+    {
+        $all = $request->param();
+        return $all;
     }
 
 }

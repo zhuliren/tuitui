@@ -94,7 +94,7 @@ class MallOrder extends Controller
         //订单状态 0.待支付1.待收货2.待核销3.已完成4.已取消 5.全部订单
         $order_type = $_REQUEST['order_type'];
         //判断查询订单类型
-        if ($order_type > 5 || $order_type < 0) {
+        if ($order_type > 6 || $order_type < 0) {
             $data = array('status' => 1, 'msg' => '参数错误', 'data' => '');
             return json($data);
         } else {

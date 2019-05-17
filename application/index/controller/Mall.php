@@ -10,6 +10,7 @@ namespace app\index\controller;
 
 
 use think\Db;
+use think\db\exception\ModelNotFoundException;
 use think\Request;
 
 class Mall
@@ -85,12 +86,23 @@ class Mall
         }
     }
 
+    /**
+     * @param Request $request
+     * @return \think\response\Json
+     * @time: 2019/5/15
+     * @autor: duheyuan
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws ModelNotFoundException
+     * @throws \think\exception\DbException
+     * 必买好货接口
+     */
     public function getMustbuyGoods(Request $request)
     {
         if ($request->isPost()){
-
-            $res = Db::name('ml_tbl_goods')->where('is_online',1)->where('goods_sort',99)->limit(5)->field('id,goods_name,goods_stock,ex_time,bonus_price,goods_price,goods_original_price,must_img')->select();
-
+            $res = Db::name('ml_tbl_goods')->where('is_online',1)
+                ->where('goods_sort',99)->limit(5)
+                ->field('id,goods_name,goods_stock,ex_time,bonus_price,goods_price,goods_original_price,goods_sell_out,head_img')
+                ->select();
             if ($res > 0){
                 return json(['status'=>1001,'msg'=>'成功','data'=>$res]);
             }else{
@@ -99,6 +111,74 @@ class Mall
         }else{
             return json(['status'=>2002,'msg'=>'方法错误','data'=>'']);
         }
+    }
+
+    /**
+     * @param Request $request
+     * @return \think\response\Json
+     * @time: 2019/5/15
+     * @autor: duheyuan
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws ModelNotFoundException
+     * @throws \think\exception\DbException
+     *  商城首页商品列表
+     */
+    public function getGoodsClassList(Request $request)
+    {
+        if ($request->isPost()){
+            $goodsClass = self::getClassList2();
+            $returnarr = [];
+            foreach ($goodsClass as $k=>$v){
+                if ($v['id'] !== 1){
+                    $returnarr[] = [
+                    'cid'=>$v['id'],
+                    'name'=>$v['class_name'],
+                    'as_name'=>$v['as_name'],
+                    'goodslist'=> Db::name('ml_tbl_goods')->where('goods_class',$v['id'])->where('is_online',1)->field('id as gid,goods_name,head_img,goods_stock,goods_price,goods_original_price,bonus_price,goods_sell_out,ex_time')->limit(4)->select(),
+                    ];
+                }
+            }
+            return json(['status'=>1001,'msg'=>'成功','data'=>$returnarr]);
+        }else{
+            return json(['status'=>2002,'msg'=>'方法错误','data'=>'']);
+        }
+    }
+
+    /**
+     * @return false|\PDOStatement|string|\think\Collection
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws ModelNotFoundException
+     * @throws \think\exception\DbException
+     * @time: 2019/5/15
+     * @autor: duheyuan
+     * 获取分类
+     */
+    public function getClassList()
+    {
+
+        $selectgoodsclass = Db::table('ml_tbl_goods_class')->select();
+        return json(['status'=>1001,'msg'=>'获取分类成功','data'=>$selectgoodsclass]);
 
     }
+    public function getClassList2()
+    {
+        $selectgoodsclass = Db::table('ml_tbl_goods_class')->select();
+        return $selectgoodsclass;
+    }
+
+    public function classGoodsList(Request $request)
+    {
+        if ($request->isPost()){
+            $id = $request->param('id');
+            if (isset($id) && !empty($id)){
+                $goodsList = Db::name('ml_tbl_goods')->where('goods_class',$id)->where('is_online',1)->field('id,head_img,goods_name,goods_summary,goods_stock,ex_time,bonus_price,goods_price,goods_original_price,goods_sell_out')->select();
+            }else{
+                $goodsList = Db::name('ml_tbl_goods')->where('is_online',1)->field('id,head_img,goods_name,goods_summary,goods_stock,ex_time,bonus_price,goods_price,goods_original_price,goods_sell_out')->select();
+            }
+            return json(['status'=>1001,'msg'=>'成功','data'=>$goodsList]);
+        }
+
+    }
+
+
 }

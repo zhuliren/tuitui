@@ -82,3 +82,8 @@ ALTER TABLE ml_tbl_user ADD unique(`wechat_open_id`)
 
 ALTER TABLE ml_tbl_goods ADD COLUMN `must_img` varchar(255)  DEFAULT null COMMENT '必买商品图片';
 
+
+ALTER TABLE ml_tbl_goods_class ADD COLUMN `class_img` varchar(255)  DEFAULT null COMMENT '分类图片图片';
+
+ALTER TABLE ml_tbl_goods_class ADD COLUMN `as_name` varchar(20)  DEFAULT null COMMENT '分类别名';
+
