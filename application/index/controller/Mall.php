@@ -101,7 +101,7 @@ class Mall
         if ($request->isPost()){
             $res = Db::name('ml_tbl_goods')->where('is_online',1)
                 ->where('goods_sort',99)->limit(5)
-                ->field('id,goods_name,goods_stock,ex_time,bonus_price,goods_price,goods_original_price,goods_sell_out,head_img')
+                ->field('id,goods_name,goods_stock,ex_time,bonus_price,goods_price,goods_original_price,goods_sell_out,head_img,goods_summary')
                 ->select();
             if ($res > 0){
                 return json(['status'=>1001,'msg'=>'成功','data'=>$res]);

@@ -142,6 +142,15 @@ Route::rule('getRichText', 'index/MallGoods/getRichText');
 
 
 
+Route::rule('allgoodsList', 'admin/Goods/allgoodsList');    //  所有已上线商品
+Route::rule('unlineGoods', 'admin/Goods/getUnlineGoods');   //  所有已下线商品
+Route::rule('goodsDetail', 'admin/Goods/getGoodsDetail');   //  商品详情
+Route::rule('editGoods', 'admin/Goods/editGoods');   //  修改商品详情
+Route::rule('editBanner', 'admin/Goods/editGoodsBanner');   //  修改商品详情
+Route::rule('editShareInfo', 'admin/Goods/editShareInfo');   //  修改商品详情
+Route::rule('getShareInfo', 'admin/Goods/getGoodsShareInfo');   //  获取商品分享信息
+
+
 
 
 

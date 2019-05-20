@@ -16,7 +16,7 @@ return [
 //    'hostname'        => '47.102.125.6',
     'hostname'        => 'localhost',
     // 数据库名
-    'database'        => 'xmsj',
+    'database'        => 'hanshan',
     // 用户名
     'username'        => 'root',
     // 密码
