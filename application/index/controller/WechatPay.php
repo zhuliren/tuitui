@@ -10,11 +10,12 @@ namespace app\index\controller;
 
 
 use app\common\Model\PublicEnum;
+use app\index\Controller;
 use app\index\model\MenPiao;
 use think\Db;
 use think\Request;
 
-class WechatPay
+class WechatPay extends Controller
 {
     public function unifiedorder()
     {
@@ -90,6 +91,7 @@ class WechatPay
         }
         return json($data);
     }
+
 
     public function xmWechatPay(Request $request)
     {
@@ -345,4 +347,47 @@ class WechatPay
         $xml .= "</xml>";
         return $xml;
     }
+
+
+    /**
+     * @param Request $request
+     * @time: 2019/5/21
+     * @autor: duheyuan
+     * 提现--
+     */
+    //TODO  提现,未完成,等待平台申请
+    public function doWithdraw(Request $request)
+    {
+//        if ($request->isPost()){
+        $all = $request->param();
+        if (isset($all['order_no']) && !empty($all['order_no'])){
+            $order_info = Db::name('ml_tbl_withdraw')->where('order_no',$all['order_no'])->find();
+            $openid = Db::name('ml_tbl_user')->where('id',$order_info['uid'])->value('wechat_open_id');
+            $data = array(
+                'mch_appid' => PublicEnum::WX_APPID ,//小程序appid
+                'mchid' => '1501953711',//商户号
+                'nonce_str' => $this->nonce_str(),//随机字符串
+//                    'notify_url' => 'https://tuitui.tango007.com/sjht/public/payNotify',//通知地址
+                'partner_trade_no' => $all['order_no'],//商户订单号
+                'spbill_create_ip' => '192.168.0.2',//终端IP
+                'amount' => $order_info['amount'] * 100,//标价金额
+                'openid' => $openid,
+                'check_name' => 'NO_CHECK',//校验用户姓名选项
+                'desc' => '用户提现',
+
+            );
+
+            $sign = $this->getSign($data);//签名
+            $data['sign'] = $sign;
+            $xmldata = $this->ToXml($data);//数组转化为xml
+            $url = 'https://api.mch.weixin.qq.com/mmpaymkttransfers/promotion/transfers';
+            $res = $this->http_send_query($url, $xmldata);
+            $result = $this->FromXml($res);
+            dump($result);die;
+        }
+
+//        }
+
+    }
+
 }

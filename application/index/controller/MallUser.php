@@ -651,28 +651,5 @@ class MallUser
         }
     }
 
-    // 名字正则
-    public function namePreg(Request $request)
-    {
-        if ($request->isPost()){
-            $all = $request->param();
-            if (isset($all['realname']) && !empty($all['realname'])){
-                if (preg_match("/^[\x{4e00}-\x{9fa5}]{3,6}$/u",$all['realname'])) {
-                    print("中文");
-//                    return true;
-                } else {
-//                    return false;
-                    print("非中文");
-                }
-            }
-        }else{
-            return json(['status'=>2001,'msg'=>'请求方法出错','data'=>'']);
-        }
-
-
-    }
-
-
-
 
 }

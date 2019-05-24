@@ -41,11 +41,11 @@ class UserModel extends Model
     public function userIdentity($user_id)
     {
         //判断用户是否存在
-        $selectuser = Db::name('xm_tbl_user')->where('id', $user_id)->find();
-        if (!empty($selectuser)) {
+        $selectuser = Db::table('xm_tbl_user')->where('id', $user_id)->find();
+        if (isset($selectuser)) {
             //查询用户表
-//            $userdetails = db('xm_tbl_user')->where('id', $user_id)->find();
-            if ($selectuser['up_code'] == null) {
+            $userdetails = db('xm_tbl_user')->where('id', $user_id)->find();
+            if ($userdetails['up_code'] == null) {
                 return 0;
             } else {
                 //查询

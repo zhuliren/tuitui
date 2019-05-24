@@ -132,7 +132,13 @@ Route::rule('mustBuy', 'index/Mall/getMustbuyGoods');
 Route::rule('getGoodsList', 'index/Mall/getGoodsClassList');
 Route::rule('getClassList', 'index/Mall/getClassList');
 Route::rule('classGoodsList', 'index/Mall/classGoodsList');
-Route::rule('getRichText', 'index/MallGoods/getRichText');
+Route::rule('getGoodsFormat', 'index/MallGoods/getGoodsFormat');
+
+
+Route::rule('getUserPact', 'index/User/getUserPact');   //  获取分销协议
+Route::rule('doWithdraw', 'index/WechatPay/doWithdraw');   //  获取分销协议
+Route::rule('insertBank', 'index/User/insertBankInfo');   //  新增用户银行卡
+Route::rule('createWithdrawOrder', 'index/User/createWithdrawOrder');   //  生成提现订单号
 
 
 
@@ -141,6 +147,7 @@ Route::rule('getRichText', 'index/MallGoods/getRichText');
 
 
 
+Route::rule('ToExcel', 'admin/Excel/testExcel');   //
 
 Route::rule('allgoodsList', 'admin/Goods/allgoodsList');    //  所有已上线商品
 Route::rule('unlineGoods', 'admin/Goods/getUnlineGoods');   //  所有已下线商品
@@ -149,6 +156,9 @@ Route::rule('editGoods', 'admin/Goods/editGoods');   //  修改商品详情
 Route::rule('editBanner', 'admin/Goods/editGoodsBanner');   //  修改商品详情
 Route::rule('editShareInfo', 'admin/Goods/editShareInfo');   //  修改商品详情
 Route::rule('getShareInfo', 'admin/Goods/getGoodsShareInfo');   //  获取商品分享信息
+Route::rule('cutOrder', 'admin/Order/cutOrder');   //  完成订单
+Route::rule('getWithdrawList', 'admin/Withdraw/getWithdrawList');   //  获取提现列表
+Route::rule('exportExcel', 'admin/Withdraw/exportExcel');   //  获取提现列表
 
 
 

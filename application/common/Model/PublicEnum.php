@@ -25,7 +25,7 @@ class PublicEnum
     const ORDER_UNAPPLIED = 2;//待核销
     const ORDER_COMPLETED = 3;//已完成
     const ORDER_CANCELLED = 4;//已取消
-    const ORDER_NO_SHIPPED = 5;//待发货
+    const ORDER_NO_SHIPPED = 6;//待发货
 
 
     const TICKET_ID = 'shihuituan';

@@ -27,10 +27,9 @@ class Controller extends \think\Controller
         return $str;
     }
 
-//    public function
 
     //  签名
-    public function getsign($params)
+    public function getTSign($params)
     {
         ksort($params); //将参数数组按照参数名ASCII码从小到大排序
         foreach ($params as $key => $item) {
@@ -60,6 +59,27 @@ class Controller extends \think\Controller
         curl_close($info);
 
         return $output;
+    }
+
+    public function http_send_query($url,$rawData)
+    {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_HEADER, 0);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $rawData);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:text'));
+        curl_setopt($ch,CURLOPT_SSLCERT,ROOT_PATH .'/public/cacert/apiclient_cert.pem'); //这个是证书的位置绝对路径
+        curl_setopt($ch,CURLOPT_SSLKEY,ROOT_PATH .'/public/cacert/apiclient_key.pem');
+        $data = curl_exec($ch);
+        curl_close($ch);
+
+        return $data;
+
+
     }
 
 }

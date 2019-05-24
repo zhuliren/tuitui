@@ -14,6 +14,14 @@ use think\Request;
 
 class MallGoods extends Controller
 {
+    protected $request;
+
+    public function __construct(Request $request = null)
+    {
+        parent::__construct($request);
+        $this->request = $request;
+
+    }
 
     public function creatGoods()
     {
@@ -56,37 +64,51 @@ class MallGoods extends Controller
         if (!isset($all['goods_class']) || empty($all['goods_class'])){
             return json(['status'=>0,'msg'=>'商品分类不可为空','data'=>'']);
         }
-        if (!isset($all['goods_original_price']) || empty($all['goods_original_price'])){
-            $all['goods_original_price'] = $all['goods_price'];
-        }
         if (isset($all['goods_price']) && empty($all['goods_price'])){
             return json(['status'=>0,'msg'=>'商品价格不可为空','data'=>'']);
-        }
-        if (!isset($all['bonus_price']) || empty($all['bonus_price'])){
-            return json(['status'=>0,'msg'=>'分销价格不可为空','data'=>'']);
         }
         if (!isset($all['head_img']) || empty($all['head_img'])){
             return json(['status'=>0,'msg'=>'商品头像不可为空','data'=>'']);
         }
-        if (!isset($all['goods_format']) || empty($all['goods_format'])){
-            return json(['status'=>0,'msg'=>'商品规格不可为空','data'=>'']);
-        }
+//        if (!isset($all['goods_format']) || empty($all['goods_format'])){
+//            return json(['status'=>0,'msg'=>'商品规格不可为空','data'=>'']);
+//        }
         if (!isset($all['type']) || empty($all['type'])){
             return json(['status'=>0,'msg'=>'商品核销类型不可为空','data'=>'']);
         }
-        if (!isset($all['ex_time']) || empty($all['ex_time'])){
-            return json(['status'=>0,'msg'=>'商品到期时间不可为空','data'=>'']);
-        }
-
         if (isset($all['banner']) && !empty($all['banner'])) {
             $banner = $all['banner'];
             unset($all['banner']);
         }
-        if (!isset($all['goods_details']) || empty($all['goods_details'])){
-            return json(['status'=>0,'msg'=>'商品详情不可为空','data'=>'']);
+        if (isset($all['format']) && !empty($all['format'])){
+            $format = $all['format'];
+            unset($all['format']);
         }
         $all['creat_time'] = date('Y-m-d H:m:s' ,time());
+        Db::startTrans();
         $last_id = Db::name('ml_tbl_goods')->insertGetId($all);
+        if (!$last_id){
+            Db::rollback();
+            return json(['status'=>5001,'msg'=>'商品新增上传失败','data'=>'']);
+        }
+
+        if (!empty($format)){
+            $format_arr = [];
+            foreach ($format as $k=>$v){
+                $format_arr[] = [
+                    'gid'=>$last_id,
+                    'format_id'=>$v['format_id'],
+                    'format_name'=>$v['format_name'],
+                    'format_price'=>$v['format_price']
+                ];
+            }
+            $format_status = Db::name('ml_tbl_goods_format')->insertAll($format_arr);
+            if (!$format_status){
+                Db::rollback();
+                return json(['status'=>5001,'msg'=>'商品规格新增失败','data'=>'']);
+            }
+        }
+
         if (isset($banner) && !empty($banner)){
             $arr = [];
             foreach ( $banner as $k=>$v){
@@ -95,17 +117,17 @@ class MallGoods extends Controller
                     'goods_id'=>$last_id,
                 ];
             }
-        $res = Db::name('ml_tbl_goods_banner')->insertAll($arr);
-        }
-        if (isset($res)){
-            if ($last_id && $res){
-                return json(['status'=>0,'msg'=>'成功','data'=>'']);
-            }else{
-                return json(['status'=>1,'msg'=>'商品上传失败','data'=>'']);
+            $res = Db::name('ml_tbl_goods_banner')->insertAll($arr);
+            if (!$res){
+                if (!$res){
+                    Db::rollback();
+                    return json(['status'=>5001,'msg'=>'商品banner插入失败','data'=>'']);
+                }
             }
-        }else{
-            return json(['status'=>1,'msg'=>'商品banner上传失败','data'=>'']);
         }
+        Db::commit();
+        return json(['status'=>0,'msg'=>'成功','data'=>'']);
+
     }
 
 
@@ -145,6 +167,13 @@ class MallGoods extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @return array|\think\response\Json
+     * @time: 2019/5/23
+     * @autor: duheyuan
+     * 图片链接转存本地服务器
+     */
     public function shareImgUpload(Request $request)
     {
         $type = 1;
@@ -188,10 +217,16 @@ class MallGoods extends Controller
     }
 
 
-    public function getRichText(Request $request)
+    public function getGoodsFormat()
     {
-        $all = $request->param();
-        return $all;
+        $gid = $this->request->param('id');
+
+        $format_list = Db::name('ml_tbl_goods_format')->where('gid',$gid)->select();
+
+        dump($format_list);die;
+
+
+
     }
 
 }

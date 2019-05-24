@@ -134,7 +134,7 @@ class Mall
                     'cid'=>$v['id'],
                     'name'=>$v['class_name'],
                     'as_name'=>$v['as_name'],
-                    'goodslist'=> Db::name('ml_tbl_goods')->where('goods_class',$v['id'])->where('is_online',1)->field('id as gid,goods_name,head_img,goods_stock,goods_price,goods_original_price,bonus_price,goods_sell_out,ex_time')->limit(4)->select(),
+                    'goodslist'=> Db::name('ml_tbl_goods')->where('goods_class',$v['id'])->where('is_online',1)->order('goods_sort','desc')->field('id as gid,goods_name,head_img,goods_stock,goods_price,goods_original_price,bonus_price,goods_sell_out,ex_time')->limit(4)->select(),
                     ];
                 }
             }

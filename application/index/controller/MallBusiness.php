@@ -148,10 +148,16 @@ class MallBusiness
             $all = $request->param();
             if (isset($all['b_id']) && !empty($all['b_id'])){
                 $business_id = $all['b_id'];
-                $list = Db::query("SELECT od.id as oid,g.head_img,g.goods_name,g.goods_price,od.goods_num,o.user_name,o.creat_time,od.express_no, o.pay_time,o.pay_price 
-                                      FROM ml_tbl_goods as g join ml_tbl_order_details as od join ml_tbl_order as o 
+                $list = Db::query("SELECT od.id as oid,g.head_img,g.goods_name,g.goods_price,od.goods_num,o.user_name,o.creat_time,od.express_no, o.pay_time,o.pay_price
+                                      FROM ml_tbl_goods as g  join ml_tbl_order as o join ml_tbl_order_details as od
                                       WHERE g.id = od.goods_id and od.order_zid = o.id and g.business_id = (?) and o.order_type = (?)",
                                         [$business_id,PublicEnum::ORDER_NO_SHIPPED]);
+                /*
+                $sql = "SELECT od.id as oid,g.head_img,g.goods_name,g.goods_price,od.goods_num,o.user_name,o.creat_time,od.express_no, o.pay_time,o.pay_price,
+                           FROM `ml_tbl_goods` as g   JOIN `ml_tbl_order_details` as od on g.id = od.goods_id  JOIN `ml_tbl_order` as o
+                            and o.id = od.order_zid and g.business_id = {$business_id} AND o.order_type = 6";
+                dump($list);die;
+                */
                 return json(['status'=>1,'msg'=>'成功','data'=>$list]);
 
             }else{
@@ -164,13 +170,12 @@ class MallBusiness
 
     public function updateOrderType(Request $request)
     {
-        if ($request->isPost()){
             $all = $request->param();
-            if (!isset($all['oid']) && empty($all['oid'])){
-                return json(['status'=>0,'msg'=>'参数错误,请携带正确参数','data'=>'']);
+            if (!isset($all['oid']) || empty($all['oid'])){
+                return json(['status'=>0,'msg'=>'参数错误,请携带正确参数1','data'=>'']);
             }
-            if (!isset($all['exp_no']) && empty($all['exp_no'])){
-                return json(['status'=>0,'msg'=>'参数错误,请携带正确参数','data'=>'']);
+            if (!isset($all['exp_no']) || empty($all['exp_no'])){
+                return json(['status'=>0,'msg'=>'参数错误,请携带正确参数2','data'=>'']);
             }
             $res = Db::query("UPDATE  ml_tbl_order_details as od join ml_tbl_order as o SET  o.order_type = (?),od.express_no=(?)  WHERE od.id =(?) and od.order_zid = o.id ",[PublicEnum::ORDER_UNRECEIVED,$all['exp_no'],$all['oid']]);
             if ($res > 0){
@@ -179,9 +184,6 @@ class MallBusiness
                 return json(['status'=>0,'msg'=>'修改成功','data'=>'']);
 
             }
-        }else{
-            return json(['status'=>0,'msg'=>'方法错误','data'=>'']);
-        }
     }
 
 }

@@ -107,11 +107,9 @@ class Goods extends Controller
 
         if (isset($all['id']) && !empty($all['id'])){
             $res = Db::name('ml_tbl_goods')->where('id',$all['id'])->update($all);
-            if ($res > 0 ){
-                return json(['status'=>1001,'msg'=>'成功','data'=>$res]);
-            }else{
-                return json(['status'=>2002,'msg'=>'失败','data'=>$res]);
-            }
+
+            return json(['status'=>1001,'msg'=>'成功','data'=>$res]);
+
         }else{
             return json(['status'=>2001,'msg'=>'参数错误','data'=>'']);
         }
@@ -131,11 +129,7 @@ class Goods extends Controller
                 ];
             }
             $res = Db::name('ml_tbl_goods_banner')->insertAll($arr);
-            if ($res > 0 ){
-                return json(['status'=>1001,'msg'=>'成功','data'=>$res]);
-            }else{
-                return json(['status'=>2002,'msg'=>'新增失败','data'=>'']);
-            }
+            return json(['status'=>1001,'msg'=>'成功','data'=>$res]);
         }else{
             return json(['status'=>2001,'msg'=>'参数错误','data'=>'']);
         }
@@ -154,27 +148,20 @@ class Goods extends Controller
 
                 }
 
-            }else{
-                return json(['status'=>2001,'msg'=>'参数错误','data'=>'']);
             }
-            if (isset($all['goods_img']) && !empty($all['goods_img'])){
+            if (isset($all['banner']) && !empty($all['banner'])){
                 Db::name('ml_tbl_goods_img')->where('gid',$all['id'])->delete();
                 $arr = [];
-                foreach ($all['goods_img'] as $k=>$v){
+                foreach ($all['banner'] as $k=>$v){
                     $arr [] = [
                       'gid'=>$all['id'],
                         'url'=>$v
                     ];
                 }
                 $result = Db::name('ml_tbl_goods_img')->insertAll($arr);
-            }else{
-                return json(['status'=>2001,'msg'=>'参数错误','data'=>'']);
             }
-            if ($res && $result){
-                return json(['status'=>1001,'msg'=>'修改成功','data'=>'']);
-            }else{
-                return json(['status'=>2002,'msg'=>'修改失败','data'=>'']);
-            }
+            return json(['status'=>1001,'msg'=>'修改成功','data'=>'']);
+
         }else{
             return json(['status'=>2001,'msg'=>'参数错误','data'=>'']);
         }
@@ -192,7 +179,6 @@ class Goods extends Controller
         }else{
             return json(['status'=>2001,'msg'=>'参数错误','data'=>'']);
         }
-
 
     }
 

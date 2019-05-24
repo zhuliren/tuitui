@@ -11,6 +11,7 @@ namespace app\index\controller;
 
 use app\index\model\UserModel;
 use think\Db;
+use think\Request;
 
 class user
 {
@@ -459,4 +460,108 @@ class user
             return json($data);
         }
     }
+
+    public function getUserPact()
+    {
+        $res =  Db::name('ml_tbl_user_pact')->where(['id'=>1])->find();
+        return json(['status'=>1001,'msg'=>'成功','data'=>$res]);
+    }
+
+    /**
+     * @param Request $request
+     * @return \think\response\Json
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     * @time: 2019/5/22
+     * @autor: duheyuan
+     * 新增提现信息
+     */
+    public function createWithdrawOrder(Request $request)
+    {
+        if ($request->isPost()){
+            $all = $request->param();
+            if (isset($all['id']) && !empty($all['id'])){
+                $userBank = Db::name('ml_tbl_user_bank_card')->where('uid',$all['id'])->find();
+                if (!$userBank){
+                    return json(['status'=>3002,'msg'=>'未绑定银行卡,请先绑定银行卡','data'=>'']);
+                }
+                $userInfo = Db::name('ml_tbl_user')->where('id',$all['id'])->find();
+                if ($userInfo <= 0){
+                    return json(['status'=>3001,'msg'=>'该用户不存在','data'=>'']);
+                }
+                if(!isset($all['amount']) || empty($all['amount'])){
+                    return json(['status'=>2001,'msg'=>'参数错误','data'=>'']);
+                }
+                $arr = [
+                    'uid'=>$all['id'],
+                    'order_no'=>randomOrder_no(),
+                    'amount'=>$all['amount'],
+                    'ctime'=>time(),
+                    'desc'=>'提现'
+                ];
+                $res = Db::name('ml_tbl_withdraw')->insert($arr);
+                if ($res >0 ){
+                    return json(['status'=>1001,'msg'=>'成功','data'=>'']);
+                }else{
+                    return json(['status'=>5001,'msg'=>'订单号提交失败,请重新点击','data'=>'']);
+                }
+            }else{
+                return json(['status'=>2001,'msg'=>'参数错误','data'=>'']);
+            }
+        }else{
+            return json(['status'=>5001,'msg'=>'请求方法错误','data'=>'']);
+        }
+    }
+
+    pubLic function insertBankInfo(Request $request)
+    {
+        if ($request->isPost()){
+            $all = $request->param();
+            if (empty($all['uid'])){
+                return json(['status'=>2001,'msg'=>'参数错误','data'=>'']);
+            }else{
+                if (Db::name('ml_tbl_user_bank_card')->where('uid',$all['uid'])->find()){
+                    return json(['status'=>2010,'msg'=>'该用户已绑定银行卡','data'=>'']);
+                }
+            }
+            if (empty($all['name'])){
+                return json(['status'=>2001,'msg'=>'参数错误','data'=>'']);
+            }
+            if (empty($all['card_id'])){
+                return json(['status'=>2001,'msg'=>'参数错误','data'=>'']);
+            }
+
+            if(!namePreg($all['name'])){
+                return json(['status'=>2005,'msg'=>'用户名不正确','data'=>'']);
+            }
+            if (!empty($all['tel'])){
+                if( !preg_mobile($all['tel'])){
+                    return json(['status'=>2001,'msg'=>'手机格式不正确','data'=>'']);
+                }
+            }
+            $url = "https://ccdcapi.alipay.com/validateAndCacheCardInfo.json?_input_charset=utf-8&cardBinCheck=true&cardNo=".$all['card_id'];
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_URL, $url);
+            $res = curl_exec($ch);
+            curl_close($ch);
+            $result = json_decode($res, true);
+            if (!$result['validated']){
+                return json(['status'=>2001,'msg'=>'银行卡号错误错误','data'=>'']);
+            }
+            $all['ctime'] = time();
+            if (Db::name('ml_tbl_user_bank_card')->insert($all)){
+                return json(['status'=>1001,'msg'=>'新增成功','data'=>'']);
+            }else{
+                return json(['status'=>5005,'msg'=>'新增成功','data'=>'']);
+            }
+
+        }else{
+            return json(['status'=>5001,'msg'=>'方法错误','data'=>'']);
+        }
+
+    }
+
 }

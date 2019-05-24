@@ -41,7 +41,7 @@ class Ticket123 extends Controller
             'timestamp'=>$time,
             'id'=>$id
         ];
-        $sign = $this->getSign($arr);
+        $sign = $this->getTSign($arr);
 
         $url = "http://test.123wlx.cn/vapi/v1/distributor/products/$id?timestamp=$timestring&client_id=".PublicEnum::TICKET_ID."&&signature=$sign&id=$id";
         $info = $this->http_url_query($url);
@@ -67,7 +67,7 @@ class Ticket123 extends Controller
             'timestamp'=>$time,
             'page'=>$page
         ];
-        $getsign = $this->getsign($arr);
+        $getsign = $this->getTSign($arr);
 
         $url = 'http://test.123wlx.cn/vapi/v1/distributor/products?client_id='.$client_id.'&timestamp='.$timestr.'&signature='.$getsign.'&page='.$page;
         $info = $this->http_url_query($url);
