@@ -26,7 +26,7 @@ class Goods extends Controller
         if ($goods_class == 1) {
             //商品列表
             $goods['total'] = Db::name('ml_tbl_goods')->where('is_online',1)->count();
-            $goods['goods_list'] = Db::table('ml_tbl_goods')->where('is_online', 1)->limit($start, $limit)->order('goods_sort','desc')
+            $goods['goods_list'] = Db::table('ml_tbl_goods')->where('is_online', 1)->limit($start, $limit)->order('id','desc')
                 ->field('id,head_img,goods_name,goods_stock,bonus_price,goods_price,goods_original_price,goods_sell_out,goods_class,type,ex_time')->select();
             if ($goods) {
                 $data = array('status' => 0, 'msg' => '成功', 'data' => $goods);
@@ -37,7 +37,7 @@ class Goods extends Controller
             }
         } else {
             $goods['total'] = Db::name('ml_tbl_goods')->where('is_online',1)->where('goods_class', $goods_class)->count();
-            $goods['goods_list'] = Db::table('ml_tbl_goods')->where('is_online', 1)->where('goods_class', $goods_class)->limit($start, $limit)->order('goods_sort','desc')
+            $goods['goods_list'] = Db::table('ml_tbl_goods')->where('is_online', 1)->where('goods_class', $goods_class)->limit($start, $limit)->order('id','desc')
                 ->field('id,head_img,goods_name,goods_stock,bonus_price,goods_price,goods_original_price,goods_sell_out,goods_class,type,ex_time')->select();
             if ($goods) {
                 $data = array('status' => 0, 'msg' => '成功', 'data' => $goods);
@@ -71,7 +71,7 @@ class Goods extends Controller
             }
         } else {
             $goods['total'] = Db::name('ml_tbl_goods')->where('is_online',0)->where('goods_class',$goods_class)->count();
-            $goods['goods_list'] = Db::table('ml_tbl_goods')->where('is_online', 0)->where('goods_class', $goods_class)->limit($start, $limit)->order('goods_sort','desc')
+            $goods['goods_list'] = Db::table('ml_tbl_goods')->where('is_online', 0)->where('goods_class', $goods_class)->limit($start, $limit)->order('id','desc')
                 ->field('id,head_img,goods_name,goods_stock,bonus_price,goods_price,goods_original_price,goods_sell_out,goods_class,type,ex_time')->select();
             if ($goods) {
                 $data = array('status' => 0, 'msg' => '成功', 'data' => $goods);

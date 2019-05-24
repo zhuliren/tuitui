@@ -139,6 +139,7 @@ Route::rule('getUserPact', 'index/User/getUserPact');   //  获取分销协议
 Route::rule('doWithdraw', 'index/WechatPay/doWithdraw');   //  获取分销协议
 Route::rule('insertBank', 'index/User/insertBankInfo');   //  新增用户银行卡
 Route::rule('createWithdrawOrder', 'index/User/createWithdrawOrder');   //  生成提现订单号
+Route::rule('commissionList', 'index/User/commissionList');   //  生成提现订单号
 
 
 

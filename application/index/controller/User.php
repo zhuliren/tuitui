@@ -500,6 +500,12 @@ class user
                     'ctime'=>time(),
                     'desc'=>'提现'
                 ];
+                $now_balance = Db::name('ml_tbl_wallet')->where('user_id',$all['id'])->value('balance');
+                if ($all['amount'] > $now_balance){
+                    return json(['status'=>3005,'msg'=>'可提现余额不足','data'=>'']);
+                }
+
+                Db::name('ml_tbl_wallet')->where('user_id',$all['id'])->setDec('balance',$all['amount']);
                 $res = Db::name('ml_tbl_withdraw')->insert($arr);
                 if ($res >0 ){
                     return json(['status'=>1001,'msg'=>'成功','data'=>'']);
@@ -561,6 +567,21 @@ class user
         }else{
             return json(['status'=>5001,'msg'=>'方法错误','data'=>'']);
         }
+
+    }
+
+    public function commissionList(Request $request)
+    {
+        if ($request->isPost()){
+
+            $id = $request->param('id');
+            if (isset($id) && !empty($id)){
+
+
+            }
+        }
+
+
 
     }
 
