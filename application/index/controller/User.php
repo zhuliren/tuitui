@@ -520,6 +520,13 @@ class user
         }
     }
 
+    /**
+     * @param Request $request
+     * @return \think\response\Json
+     * @time: 2019/5/27
+     * @autor: duheyuan
+     * 新增银行卡信息
+     */
     pubLic function insertBankInfo(Request $request)
     {
         if ($request->isPost()){
@@ -557,6 +564,7 @@ class user
             if (!$result['validated']){
                 return json(['status'=>2001,'msg'=>'银行卡号错误错误','data'=>'']);
             }
+            $all['bank'] = $result['bank'];
             $all['ctime'] = time();
             if (Db::name('ml_tbl_user_bank_card')->insert($all)){
                 return json(['status'=>1001,'msg'=>'新增成功','data'=>'']);
@@ -570,19 +578,168 @@ class user
 
     }
 
+    /**
+     * @param Request $request
+     * @return \think\response\Json
+     * @time: 2019/5/27
+     * @autor: duheyuan
+     * 返佣列表
+     */
     public function commissionList(Request $request)
     {
         if ($request->isPost()){
-
             $id = $request->param('id');
-            if (isset($id) && !empty($id)){
-
-
+            $time = $request->param('time');
+            $type = $request->param('type');
+            if (isset($time) && !empty($time)){
+                $time_ = date('Y-m-d H:i:s',strtotime("-1$time"));
+            }else{
+                $time_ = 0;
             }
+            if (isset($id) && !empty($id)){
+                if (isset($type) && !empty($type)){
+                    if ($type == 1){
+                        $type_ = '个人佣金';
+                    }else{
+                        $type_ = '团队返佣';
+                    }
+                    $sql = "SELECT  d.time,d.amount,d.remarks,d.order_num,o.pay_price
+                  FROM `ml_tbl_wallet` AS w JOIN `ml_tbl_wallet_details` as d ON w.id = d.wallet_id JOIN `ml_tbl_order` as o ON d.order_num = o.order_id
+                  WHERE w.user_id = {$id} AND d.time > '$time_' AND d.remarks = '$type_'" ;
+                }else{
+                    $sql = "SELECT  d.time,d.amount,d.remarks,d.order_num,o.pay_price
+                  FROM `ml_tbl_wallet` AS w JOIN `ml_tbl_wallet_details` as d ON w.id = d.wallet_id JOIN `ml_tbl_order` as o ON d.order_num = o.order_id
+                WHERE w.user_id = '$id' AND d.time > '$time_'" ;
+                }
+
+                $list = Db::query($sql);
+                $count = 0;
+                foreach ($list as $k=>$v){
+                    if ($v['order_num']){
+                        $list[$k]['order_num'] = str_replace(substr($v['order_num'],0,-4),'******',$v['order_num']);
+                    }
+                    $count += $v['amount'];
+                }
+                return  json(['status'=>1001,'msg'=>'成功','data'=>['list'=>$list,'count'=>$count]]);
+
+            }else{
+                return  json(['status'=>2001,'msg'=>'参数错误','data'=>'']);
+            }
+
+        }else{
+            return json(['status' => 5001, 'msg' => '请求方法错误', 'data' => '']);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return \think\response\Json
+     * @time: 2019/5/27
+     * @autor: duheyuan
+     * 我的提现明细
+     */
+    public function getMyWithdrawList(Request $request)
+    {
+        if ($request->isPost()){
+            $uid = $request->param('uid',0,'int');
+            if (isset($uid) && !empty($uid)){
+                $list = Db::name('ml_tbl_withdraw')->where('uid',$uid)->select();
+                foreach ($list as $k=>$v){
+                    if ($v['ctime']){
+                        $list[$k]['ctime'] = date('Y-m-d H:i:s',$v['ctime']);
+                    }
+                }
+                return  json(['status'=>1001,'msg'=>'成功','data'=>$list]);
+            }else{
+                return  json(['status'=>2001,'msg'=>'参数错误','data'=>'']);
+            }
+        }else{
+            return json(['status' => 5001, 'msg' => '请求方法错误', 'data' => '']);
         }
 
+    }
 
+    /**
+     * @param Request $request
+     * @return \think\response\Json
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     * @time: 2019/5/27
+     * @autor: duheyuan
+     * 获取我的银行卡
+     */
+    public function getMyBankCard(Request $request)
+    {
+        if ($request->isPost()){
+            $uid = $request->param('uid');
+            if (isset($uid) && !empty($uid)){
+                $list = Db::name('ml_tbl_user_bank_card')->where('uid',$uid)->find();
+                if ($list){
+                    $list['card_id'] = substr($list['card_id'],0,4).'****'.substr($list['card_id'],-4,4);
+                    $list['ctime'] = date('Y-m-d H:i:s',$list['ctime']);
+                }
+                return  json(['status'=>1001,'msg'=>'成功','data'=>$list]);
+            }else{
+                return  json(['status'=>2001,'msg'=>'参数错误','data'=>'']);
+            }
+        }else{
+            return json(['status' => 5001, 'msg' => '请求方法错误', 'data' => '']);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return \think\response\Json
+     * @time: 2019/5/27
+     * @autor: duheyuan
+     * 修改我的银行卡
+     */
+    public function editMyBankCard(Request $request)
+    {
+        if ($request->isPost()){
+            $all = $request->param();
+            if (isset($all['uid']) && !empty($all['uid'])){
+                if (!isset($all['card_id']) || empty($all['card_id'])){
+                    return  json(['status'=>2001,'msg'=>'参数错误','data'=>'']);
+                }
+                $url = "https://ccdcapi.alipay.com/validateAndCacheCardInfo.json?_input_charset=utf-8&cardBinCheck=true&cardNo=".$all['card_id'];
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($ch, CURLOPT_URL, $url);
+                $res = curl_exec($ch);
+                curl_close($ch);
+                $result = json_decode($res, true);
+                if (!$result['validated']){
+                    return json(['status'=>2001,'msg'=>'银行卡号错误','data'=>'']);
+                }
+                if (!preg_mobile($all['tel'])){
+                    return json(['status'=>2001,'msg'=>'手机号错误','data'=>'']);
+                }
+                $all['bank'] = $result['bank'];
+                $all['ctime'] = time();
+                $res = Db::name('ml_tbl_user_bank_card')->where('uid',$all['uid'])->update($all);
+                return  json(['status'=>1001,'msg'=>'成功','data'=>$res]);
+            }else{
+                return  json(['status'=>2001,'msg'=>'参数错误','data'=>'']);
+            }
+        }else{
+            return json(['status' => 5001, 'msg' => '请求方法错误', 'data' => '']);
+        }
 
     }
+
+    public function insertUser(Request $request)
+    {
+        $all = $request->param();
+
+        $res = Db::name('ml_tbl_user')->insertGetId($all);
+
+        return json(['status'=>1001,'msg'=>'成功','data'=>$res]);
+
+    }
+
+
 
 }

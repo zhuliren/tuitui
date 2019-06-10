@@ -32,6 +32,16 @@ function preg_mobile($mobile) {
     }
 }
 
+function preg_id_card($id_card){
+    if (preg_match("/^[1-9]\d{5}[1-9]\d{3}((0\d)|(1[0-2]))(([0|1|2]\d)|3[0-1])\d{3}([0-9]|X)$/i",$id_card)){
+        return true;
+    }else{
+        return false;
+    }
+}
+
+
+
 function randomOrder_no()
 {
     $time =date('Ymd',time());
@@ -48,7 +58,7 @@ function randomOrder_no()
 function namePreg($name)
 {
     if (isset($name) && !empty($name)){
-        if (preg_match("/^[\x{4e00}-\x{9fa5}]{3,6}$/u",$name)) {
+        if (preg_match("/^[\x{4e00}-\x{9fa5}]{2,6}$/u",$name)) {
 //                    print("中文");
             return true;
         } else {
@@ -132,4 +142,22 @@ function toExcel($list,$filename,$indexKey,$startRow=1,$excel2007=false){
     header('Content-Disposition:attachment;filename='.$filename.'');
     header("Content-Transfer-Encoding:binary");
     $objWriter->save('php://output');
+}
+
+function dd($list)
+{
+    dump($list);die;
+
+}
+
+//对象转数组
+function object_array($array) {
+    if(is_object($array)) {
+        $array = (array)$array;
+    } if(is_array($array)) {
+        foreach($array as $key=>$value) {
+            $array[$key] = object_array($value);
+        }
+    }
+    return $array;
 }

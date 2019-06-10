@@ -30,8 +30,6 @@ class Ticket123 extends Controller
 
         $res = Db::name('ml_tbl_user')->where('id',864)->select();
 
-        dump($res);die;
-
         $id = $request->param('id');
 //        $page = 1;
         $time = date('Y-m-d H:i:s',time());
@@ -45,8 +43,13 @@ class Ticket123 extends Controller
 
         $url = "http://test.123wlx.cn/vapi/v1/distributor/products/$id?timestamp=$timestring&client_id=".PublicEnum::TICKET_ID."&&signature=$sign&id=$id";
         $info = $this->http_url_query($url);
+        $res = object_array(json_decode($info));
+        if ($res['code'] == 200){
+//            dd($res);
 
-        return $info;
+        }else{
+            return json(['status'=>5001,'msg'=>$res['message'],'data'=>'']);
+        }
     }
 
     public function getInsertInfo(Request $request)
@@ -71,8 +74,16 @@ class Ticket123 extends Controller
 
         $url = 'http://test.123wlx.cn/vapi/v1/distributor/products?client_id='.$client_id.'&timestamp='.$timestr.'&signature='.$getsign.'&page='.$page;
         $info = $this->http_url_query($url);
+        $list = object_array(json_decode($info));
+        if ($list['code'] == 200){
+//            dd($res);
 
-        return $info;
+        }else{
+            return json(['status'=>5001,'msg'=>$list['message'],'data'=>'']);
+        }
+
+
+        return json(['status'=>1001,'msg'=>$list['message'],'data'=>$list]);
     }
 
 

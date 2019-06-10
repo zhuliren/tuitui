@@ -111,7 +111,14 @@ class MallOrder extends Controller
             foreach ($selectorderlist as $eachorder) {
                 //用订单表自增id查询订单商品情况
                 $order_zid = $eachorder['id'];
-                $selectgoodsheadimg = Db::table('ml_view_order_goods')->where('order_zid', $order_zid)->select();
+                $gid = Db::name('ml_tbl_order_details')->where('order_zid',$order_zid)->value('goods_id');
+//                $selectgoodsheadimg = Db::name('ml_tbl_goods_two')->where('id',$gid)->field('head_img')->select();
+                $sql = "SELECT g.head_img,g.goods_name,o.pay_price,o.creat_time,o.pay_time FROM ml_tbl_order_details  d  JOIN ml_tbl_goods_two  g ON d.goods_id = g.id JOIN ml_tbl_order o ON d.order_zid = o.id WHERE d.order_zid = $order_zid";
+                $selectgoodsheadimg = Db::query($sql);
+                if (empty($selectgoodsheadimg)){
+                    $selectgoodsheadimg = Db::name('ml_tbl_goods_two')->where('id',$gid)->field('head_img')->select();
+                }
+
                 $goods_num = count($selectgoodsheadimg);
                 //数据绑定
                 $returndata[$flag_num] = array('order_id' => $eachorder['order_id'], 'order_type' => $eachorder['order_type'], 'goods_num' => $goods_num, 'pay_price' => $eachorder['pay_price'], 'goods_head' => $selectgoodsheadimg);
@@ -208,12 +215,23 @@ class MallOrder extends Controller
         $house_num = $_REQUEST['house_num'];
         $coupon_id = $_REQUEST['coupon_id'];
         //生成订单id
+        $sizeid = $_REQUEST['sizeid'];
+        if (empty($sizeid)) {
+            return json(['status'=>2001,'msg'=>'参数错误,请重新提交','data'=>'']);
+        }
         $order_id = $user_id . date('Ymd') . substr(implode(NULL, array_map('ord', str_split(substr(uniqid(), 7, 13), 1))), 0, 8);
         //计算订单金额
-        $selectgoodsprice = Db::table('ml_tbl_goods')->where('id', $goods_id)->find();
-        $goods_stock = $selectgoodsprice['goods_stock'];
+        $selectgoodsprice = Db::table('ml_tbl_goods_two')->where('id', $goods_id)->find();
+        $format_info = Db::name('ml_tbl_goods_format')->where(['goods_id'=>$goods_id,'id'=>$sizeid])->find();
+        if ( $goods_num != 0){
+            $stock =$format_info['goods_stock'] - $goods_num;
+            if ($stock < 0){
+                return json(['status'=>2001,'msg'=>'库存不足','data'=>'']);
+            }
+        }
+        $goods_stock = $format_info['goods_stock'];
         $goods_sell_out = $selectgoodsprice['goods_sell_out'];
-        $goods_price = $selectgoodsprice['goods_price'];
+        $goods_price = $format_info['goods_price'];
         $goods_sum_price = $goods_price * $goods_num;
         $goods_sum = $goods_sum_price;
         $discount = 1;//折扣
@@ -224,7 +242,7 @@ class MallOrder extends Controller
             $selectcoupon = Db::table('xm_tbl_coupon')->where('id', $coupon_id)->find();
             //判断优惠券类型
             if ($selectcoupon['coupon_type'] == 1){
-                $pay_price = $goods_sum * $selectcoupon['discount'];
+                $pay_price = $goods_sum * ($selectcoupon['discount'] / 10);
                 if (isset($_REQUEST['pay_price']) && !empty($_REQUEST['pay_price']) ){
                     $pay_price = number_format($pay_price,2);
                     $sum_price = number_format($_REQUEST['pay_price'],2);
@@ -233,7 +251,6 @@ class MallOrder extends Controller
                     }
                 }else{
                     return json(['status'=>0,'msg'=>'参数出错','data'=>'']);
-
                 }
             }else{
                 $pay_price = $goods_sum - $selectcoupon['par_value'];
@@ -263,23 +280,25 @@ class MallOrder extends Controller
             $orderdata = ['order_id' => $order_id, 'order_type' => $order_type, 'user_id' => $user_id,
                 'phone' => $phone, 'address' => $address, 'house_num' => $house_num,
                 'coupon_id' => $coupon_id, 'freight' => $freight, 'goods_price' => $goods_sum,
-                'pay_price' => $pay_price, 'user_name' => $user_name, 'creat_time' => date("Y-m-d h:i:s", time())];
+                'pay_price' => $pay_price, 'user_name' => $user_name, 'creat_time' => date("Y-m-d h:i:s", time()),'format_id'=>$sizeid];
         } else {
             $orderdata = ['order_id' => $order_id, 'order_type' => $order_type, 'user_id' => $user_id,
                 'phone' => $phone, 'address' => $address, 'house_num' => $house_num, 'freight' => $freight, 'goods_price' => $goods_sum,
-                'pay_price' => $pay_price, 'user_name' => $user_name, 'creat_time' => date("Y-m-d h:i:s", time())];
+                'pay_price' => $pay_price, 'user_name' => $user_name, 'creat_time' => date("Y-m-d h:i:s", time()),'format_id'=>$sizeid];
         }
         $order_zid = Db::table('ml_tbl_order')->insertGetId($orderdata);
         //插入订单汇总表
         $orderdatasum = array('order_id' => $order_id, 'type' => 2, 'creat_time' => date("Y-m-d h:i:s", time()));
         Db::table('ml_xm_order_summary')->insert($orderdatasum);
         //转换购物车商品到优惠券
-        $intoorderdata = array('order_zid' => $order_zid, 'goods_id' => $goods_id, 'goods_num' => $goods_num, 'goods_price' => $goods_price);
+        $intoorderdata = array('order_zid' => $order_zid, 'goods_id' => $goods_id, 'goods_num' => $goods_num, 'goods_price' => $goods_price,'format_id'=>$sizeid);
         Db::table('ml_tbl_order_details')->insert($intoorderdata);
         //修改商品库存
         $new_goods_stock = $goods_stock - $goods_num;
         $new_goods_sell_out = $goods_sell_out + $goods_num;
-        Db::table('ml_tbl_goods')->where('id', $goods_id)->update(['goods_stock' => $new_goods_stock, 'goods_sell_out' => $new_goods_sell_out]);
+        $format_sell_out = $format_info['goods_sell_out'] + $goods_num;
+        Db::table('ml_tbl_goods_two')->where('id', $goods_id)->update(['goods_sell_out' => $new_goods_sell_out]);
+        Db::table('ml_tbl_goods_format')->where('id', $sizeid)->update(['goods_stock' => $new_goods_stock, 'goods_sell_out' => $format_sell_out]);
         $returndata = array('orderid' => $order_id, 'ordertype' => 2);
         $data = array('status' => 0, 'msg' => '成功', 'data' => $returndata);
         return json($data);
@@ -291,19 +310,40 @@ class MallOrder extends Controller
         $goods_id = $_REQUEST['goodsid'];
         $goods_num = $_REQUEST['goodsnum'];
         $user_name = filter_Emoji($_REQUEST['username']);
+        $sizeid = $this->request->param('sizeid');
+
         if (preg_mobile($_REQUEST['phone'])){
             $phone = $_REQUEST['phone'];
         }else{
             return json(['status'=>1,'msg'=>'手机号码格式不正确','data'=>'']);
         }
         $coupon_id = $_REQUEST['coupon_id'];
+        if (isset($_REQUEST['fixtime']) && !empty($_REQUEST['fixtime'])){
+            $fixtime = $_REQUEST['fixtime'];
+        }else{
+            $fixtime = null;
+        }
         //生成订单id
         $order_id = $user_id . date('Ymd') . substr(implode(NULL, array_map('ord', str_split(substr(uniqid(), 7, 13), 1))), 0, 8);
         //计算订单金额
-        $selectgoodsdata = Db::table('ml_tbl_goods')->where('id', $goods_id)->find();
-        $goods_stock = $selectgoodsdata['goods_stock'];
+        $selectgoodsdata = Db::table('ml_tbl_goods_two')->where('id', $goods_id)->find();
+        $format_info = Db::name('ml_tbl_goods_format')->where(['goods_id'=>$goods_id,'id'=>$sizeid])->find();
+        if ($selectgoodsdata['is_realname']  == 1){
+            if (isset($_REQUEST['realname']) && !empty($_REQUEST)){
+                $nameInfo = $_REQUEST['realname'];
+            }else{
+                return json(['status'=>2001,'msg'=>'参数错误','data'=>'']);
+            }
+        }
+        if ( $goods_num != 0){
+            $stock =$format_info['goods_stock'] - $goods_num;
+            if ($stock < 0){
+                return json(['status'=>2001,'msg'=>'库存不足','data'=>'']);
+            }
+        }
+        $goods_stock = $format_info['goods_stock'];
         $goods_sell_out = $selectgoodsdata['goods_sell_out'];
-        $goods_price = $selectgoodsdata['goods_price'];
+        $goods_price = $format_info['goods_price'];
         $type = $selectgoodsdata['type'];
         $goods_sum_price = $goods_price * $goods_num;
         $goods_sum = $goods_sum_price;
@@ -339,11 +379,6 @@ class MallOrder extends Controller
 
                 }
             }
-//            dump($selectcoupon);die;
-//            if ($selectcoupon['discount'] != 0) {
-//                $discount = $selectcoupon['discount'];
-//            }
-//            $par_val = $selectcoupon['par_value'];
         }else{
             //计算订单需支付金额
             $pay_price = ($goods_sum - $par_val) * $discount - $freight;
@@ -353,24 +388,46 @@ class MallOrder extends Controller
         if ($coupon_id != 'no') {
             $orderdata = ['order_id' => $order_id, 'order_type' => $order_type, 'user_id' => $user_id,
                 'phone' => $phone, 'coupon_id' => $coupon_id, 'freight' => $freight, 'goods_price' => $goods_sum,
-                'pay_price' => $pay_price, 'user_name' => $user_name, 'creat_time' => date("Y-m-d h:i:s", time())];
+                'pay_price' => $pay_price, 'user_name' => $user_name, 'creat_time' => date("Y-m-d h:i:s", time()) , 'fixtime'=>$fixtime,'format_id'=>$sizeid];
         } else {
             $orderdata = ['order_id' => $order_id, 'order_type' => $order_type, 'user_id' => $user_id,
                 'phone' => $phone, 'freight' => $freight, 'goods_price' => $goods_sum, 'pay_price' => $pay_price,
-                'user_name' => $user_name, 'creat_time' => date("Y-m-d h:i:s", time())];
+                'user_name' => $user_name, 'creat_time' => date("Y-m-d h:i:s", time()), 'fixtime'=>$fixtime,'format_id'=>$sizeid];
         }
         $order_zid = Db::table('ml_tbl_order')->insertGetId($orderdata);
+        if (isset($nameInfo) && !empty($nameInfo)){
+            $arr = [];
+            $nameInfo = json_decode($nameInfo,true);
+            foreach ($nameInfo as $k=>$v){
+                if ( !namePreg($v['name'])){
+                    return json(['status'=>2001,'msg'=>'不是正确姓名格式','data'=>'']);
+
+                }
+                if (!preg_id_card($v['id_card'])){
+                    return json(['status'=>2001,'msg'=>'不是正确身份证格式','data'=>'']);
+                }
+                $arr[] = [
+                    'order_id' => $order_zid,
+                    'realname' => $v['name'],
+                    'id_card' => $v['id_card']
+                ];
+            }
+            Db::name('ml_tbl_order_realname')->insertAll($arr);
+        }
         //插入订单汇总表
         $orderdatasum = array('order_id' => $order_id, 'type' => 2, 'creat_time' => date("Y-m-d h:i:s", time()));
         Db::table('ml_xm_order_summary')->insert($orderdatasum);
         //插入商品详情表
-        $intoorderdata = array('order_zid' => $order_zid, 'goods_id' => $goods_id, 'goods_num' => $goods_num, 'goods_price' => $goods_price, 'type' => $type);
+        $intoorderdata = array('order_zid' => $order_zid, 'goods_id' => $goods_id, 'goods_num' => $goods_num, 'goods_price' => $goods_price, 'type' => $type,'format_id'=>$sizeid);
         Db::table('ml_tbl_order_details')->insert($intoorderdata);
         $returndata = array('orderid' => $order_id, 'ordertype' => 2);
         //修改商品库存
         $new_goods_stock = $goods_stock - $goods_num;
         $new_goods_sell_out = $goods_sell_out + $goods_num;
-        Db::table('ml_tbl_goods')->where('id', $goods_id)->update(['goods_stock' => $new_goods_stock, 'goods_sell_out' => $new_goods_sell_out]);
+        $format_sell_out = $format_info['goods_sell_out'] + $goods_num;
+        Db::table('ml_tbl_goods_two')->where('id', $goods_id)->update(['goods_sell_out' => $new_goods_sell_out]);
+        Db::table('ml_tbl_goods_format')->where('id', $sizeid)->update(['goods_stock' => $new_goods_stock, 'goods_sell_out' => $format_sell_out]);
+//        Db::table('ml_tbl_goods')->where('id', $goods_id)->update(['goods_stock' => $new_goods_stock, 'goods_sell_out' => $new_goods_sell_out]);
         $data = array('status' => 0, 'msg' => '成功', 'data' => $returndata);
         return json($data);
     }
@@ -400,7 +457,7 @@ class MallOrder extends Controller
                     $goods_price = $eachdata['goods_price'];//商品价格
                     $goods_num = $eachdata['goods_num'];//商品数量;
                     $goods_id = $eachdata['goods_id'];
-                    $goodsdata = Db::table('ml_tbl_goods')->where('id', $goods_id)->find();
+                    $goodsdata = Db::table('ml_tbl_goods_two')->where('id', $goods_id)->find();
                     $goods_head = $goodsdata['head_img'];
                     $goods_name = $goodsdata['goods_name'];
                     $goods_format = $goodsdata['goods_format'];
@@ -516,7 +573,7 @@ class MallOrder extends Controller
             $data = array('status' => 1, 'msg' => '核销数量错误', 'data' => '');
         } else {
             $new_verify_num = $goods_num + $orderdetailsdata['verify_num'];
-            Db::table('ml_tbl_order_details')->where('order_zid', $order_zid)->where('goods_num')->update(['verify_num' => $new_verify_num]);
+            Db::table('ml_tbl_order_details')->where('order_zid', $order_zid)->where('goods_num',$orderdetailsdata['goods_num'])->update(['verify_num' => $new_verify_num]);
             //根据商品金额进行返佣 查询用户上级
             $channeldata = Db::table('ml_tbl_channel')->where('ml_user_id', $order_user_id)->find();
             if ($channeldata) {
@@ -539,7 +596,7 @@ class MallOrder extends Controller
             }
             //TODO 判断订单是否核销完成，此处为单订单单商品后期改为单订单多商品是需要修改
             if (($orderdetailsdata['goods_num'] - $new_verify_num) == 0) {
-                Db::table('ml_tbl_order')->where('order_id', $order_id)->update(['order_type' => 3]);
+                Db::table('ml_tbl_order')->where('order_id', $order_id)->update(['order_type' => 3,'clerk_id'=>$user_id,'clerk_time'=>time()]);
             }
             $data = array('status' => 0, 'msg' => '成功', 'data' => '');
         }

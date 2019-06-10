@@ -217,16 +217,20 @@ class MallGoods extends Controller
     }
 
 
+    /**
+     * @return \think\response\Json
+     * @time: 2019/6/3
+     * @autor: duheyuan
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     * 获取商品规格列表
+     */
     public function getGoodsFormat()
     {
         $gid = $this->request->param('id');
-
-        $format_list = Db::name('ml_tbl_goods_format')->where('gid',$gid)->select();
-
-        dump($format_list);die;
-
-
-
+        $format_list = Db::name('ml_tbl_goods_format')->where('goods_id',$gid)->select();
+        return json(['status'=>1001,'msg'=>'成功','data'=>$format_list]);
     }
 
 }

@@ -71,6 +71,9 @@ Route::rule('isClerk', 'index/MallUser/isClerk');
 //商城模块
 Route::rule('mallBanner', 'index/Mall/mallBanner');
 Route::rule('mallIndex', 'index/Mall/mallIndex');
+
+Route::rule('mallIndexTwo', 'index/Mall/mallIndexTwo');
+
 Route::rule('goodsDetails', 'index/Mall/goodsDetails');
 Route::rule('getGoodsClass', 'index/Mall/getGoodsClass');
 //购物车订单模块
@@ -129,6 +132,7 @@ Route::rule('tGoodsList', 'index/Ticket123/getMenPiaoGoodslist');//获取我的�
 
 //TODO 新商城首页接口  20190515
 Route::rule('mustBuy', 'index/Mall/getMustbuyGoods');
+Route::rule('mustBuyTwo', 'index/Mall/getMustbuyGoodsTwo');
 Route::rule('getGoodsList', 'index/Mall/getGoodsClassList');
 Route::rule('getClassList', 'index/Mall/getClassList');
 Route::rule('classGoodsList', 'index/Mall/classGoodsList');
@@ -139,7 +143,20 @@ Route::rule('getUserPact', 'index/User/getUserPact');   //  获取分销协议
 Route::rule('doWithdraw', 'index/WechatPay/doWithdraw');   //  获取分销协议
 Route::rule('insertBank', 'index/User/insertBankInfo');   //  新增用户银行卡
 Route::rule('createWithdrawOrder', 'index/User/createWithdrawOrder');   //  生成提现订单号
-Route::rule('commissionList', 'index/User/commissionList');   //  生成提现订单号
+Route::rule('commissionList', 'index/User/commissionList');   //  返佣明细
+Route::rule('getMyWithdrawList', 'index/User/getMyWithdrawList');   //  提现明细
+Route::rule('getMyBank', 'index/User/getMyBankCard');   //  获取我的银行卡
+Route::rule('editMyBankCard', 'index/User/editMyBankCard');   //  修改我的银行卡
+Route::rule('getGoodsInfo', 'index/Mall/getGoodsInfo');   //  商品详情
+Route::rule('getIndexGoodsList', 'index/Mall/getIndexGoodsList');   //  商品详情
+
+
+Route::rule('getTodayClerk', 'index/MallUser/getTodayClerk');   //  获取今日分销
+Route::rule('getMyClerk', 'index/MallUser/getMyClerk');   //  获取我的历史分销
+
+
+
+Route::rule('goodsOnline', 'admin/Goods/goodsOnline');   //  商品上下架
 
 
 
@@ -159,9 +176,11 @@ Route::rule('editShareInfo', 'admin/Goods/editShareInfo');   //  修改商品详
 Route::rule('getShareInfo', 'admin/Goods/getGoodsShareInfo');   //  获取商品分享信息
 Route::rule('cutOrder', 'admin/Order/cutOrder');   //  完成订单
 Route::rule('getWithdrawList', 'admin/Withdraw/getWithdrawList');   //  获取提现列表
-Route::rule('exportExcel', 'admin/Withdraw/exportExcel');   //  获取提现列表
-
-
+Route::rule('exportExcel', 'admin/Withdraw/exportExcel');   //  提现导出
+Route::rule('newGoodsAdd', 'admin/Goods/goodsAdd');   //  新- 新增商品
+Route::rule('inserttag', 'admin/Goods/inserttag');   //  新- 新增商品标签
+Route::rule('goodsTop', 'admin/Goods/goodsTop');   //  商品必买置顶
+Route::rule('unGoodsTop', 'admin/Goods/unGoodsTop');   //  商品取消必买
 
 
 

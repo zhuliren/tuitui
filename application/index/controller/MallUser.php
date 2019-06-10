@@ -20,11 +20,14 @@ class MallUser
 {
     protected $appid;
     protected $secret;
+    protected $request;
 
-    public function __construct()
+    public function __construct(Request $request)
     {
         $this->appid = PublicEnum::WX_APPID;
         $this->secret = PublicEnum::WX_SECRET;
+        $this->request = $request;
+
     }
 
 
@@ -355,7 +358,7 @@ class MallUser
         $list = Db::name('ml_tbl_order')->whereIn('user_id',$ids)->select();
         $data['orderNum'] = count($list);
 
-        $out_list = Db::name('ml_tbl_order')->whereIn('user_id',$ids)->whereIn('order_type','1,2,3')->select();
+        $out_list = Db::name('ml_tbl_order')->whereIn('user_id',$ids)->whereIn('order_type','1,2,3,6')->select();
         $data['out_list'] = count($out_list);
         $goodsId = '';
         foreach ($out_list as $k=>$v){
@@ -651,5 +654,48 @@ class MallUser
         }
     }
 
+    /**
+     * @param Request $request
+     * @return \think\response\Json
+     * @time: 2019/5/27
+     * @autor: duheyuan
+     * 今日核销分数
+     */
+    public function getTodayClerk(Request $request)
+    {
+        if ($request->isPost()){
+            $uid = $request->param('uid');
+            $date = strtotime(date('Y-m-d',time()));
+            $sql = "SELECT * FROM `ml_tbl_order` WHERE clerk_id = '$uid' AND  clerk_time >= '$date'";
+            $list = Db::query($sql);
+            $data = ['count'=>count($list),'list'=>$list];
+            return json(['status'=>1001,'msg'=>'成功','data'=>$data]);
+        }else{
+            return json(['status'=>5001,'msg'=>'请求方法错误','data'=>'']);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return \think\response\Json
+     * @time: 2019/6/3
+     * @autor: duheyuan
+     * 核销历史
+     */
+    public function getMyClerk(Request $request)
+    {
+        if($request->isPost()){
+            $uid = $request->param('uid');
+            if (empty($uid)){
+                return json(['status'=>2001,'msg'=>'参数错误','data'=>'']);
+            }
+            $sql = "SELECT * FROM `ml_tbl_order` WHERE clerk_id = '$uid'";
+            $list = Db::query($sql);
+            $data = ['count'=>count($list), 'list'=>$list];
+            return json(['status'=>1001,'msg'=>'成功','data'=>$data]);
+        }else{
+            return json(['status'=>5001,'msg'=>'请求方法错误','data'=>'']);
+        }
+    }
 
 }
