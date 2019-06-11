@@ -245,24 +245,31 @@ class WechatPay extends Controller
                     foreach ($goods_data as $goodsitem) {
                         $goods_id = $goodsitem['goods_id'];
                         //查询商品是否为第三方商品
-                        $goods_item_data = Db::table('ml_tbl_goods')->where('id', $goods_id)->find();
+                        $goods_item_data = Db::table('ml_tbl_goods_two')->where('id', $goods_id)->find();
+                        $format_data = Db::name('ml_tbl_goods_format')->where('id',$goodsitem['format_id'])->find();
                         $order_details_id = $goodsitem['id'];
                         if ($goods_item_data['third_id'] == 1) {
                             //调用123票务下单系统
                             $menPiao = new MenPiao();
-                            $third_number = $goods_item_data['third_number'];
+                            $third_number = $format_data['third_number'];
                             $user_name = $order_data['user_name'];
                             $user_phone = $order_data['phone'];
-                            $third_znumber = $goods_item_data['third_znumber'];
+                            $third_znumber = $format_data['third_znumber'];
                             $goods_num = $goodsitem['goods_num'];
-                            $creatMenPiaoOrder = $menPiao->creatMenPiaoOrder($third_number, $order_id, $user_name, $user_phone, $third_znumber, $goods_num);
-                            if ($creatMenPiaoOrder) {
+                            if (isset($order_data['fixtime']) && !empty($order_data['fixtime'])){
+                                $fixdate = $order_data['fixtime'];
+                            }else{
+                                $fixdate = '';
+                            }
+                            $creatMenPiaoOrder = $menPiao->creatMenPiaoOrder($third_number, $order_id, $user_name, $user_phone, $third_znumber, $goods_num,$fixdate);
+                            if ($creatMenPiaoOrder == 'yes') {
                                 $third_isconfirm = 1;
                                 //成功后修改订单状态
                                 Db::table('ml_tbl_order_details')->where('id', $order_details_id)->update(['third_isconfirm' => $third_isconfirm]);
+                                Db::table('ml_tbl_order')->where('order_id', $order_id)->update(['order_state'=>$creatMenPiaoOrder]);
                             } else {
+                                Db::table('ml_tbl_order')->where('order_id', $order_id)->update(['order_state' => $creatMenPiaoOrder]);
                             }
-                        } else {
                         }
                     }
                     $data = array('status' => 0, 'msg' => '成功', 'data' => '');

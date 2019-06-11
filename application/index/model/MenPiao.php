@@ -16,11 +16,12 @@ class MenPiao
     //TODO 123门票对接model
 
     //创建订单
-    public function creatMenPiaoOrder($third_id, $order_id, $user_name, $user_phone, $thrid_number, $goods_num)
+    public function creatMenPiaoOrder($third_id, $order_id, $user_name, $user_phone, $thrid_number, $goods_num, $fixdate = null)
     {
         //文档地址http://doc.123menpiao.com/docs/openapi/order
-        $client_id = '10518da3';
-        $timestamp = date('Y-m-d h:i:s', time());
+//        $client_id = '10518da3';
+        $client_id = 'shihuituan';
+        $timestamp = date('Y-m-d H:i:s', time());
         $product_number = $third_id;
         $partner_order_number = $order_id;
         $name = $user_name;
@@ -34,18 +35,21 @@ class MenPiao
             'name' => $name,
             'tel' => $tel,
             'line_items' => $line_items,
+            'address' => 'no',
+            'arrival_date'=>$fixdate,
         );
         $signature = $this->getSign($params);
         $params['signature'] = $signature;
-        $url = 'http://api.123menpiao.com/vapi/v1/distributor/orders';
+//        $url = 'http://api.123menpiao.com/vapi/v1/distributor/orders';
+        $url = 'http://test.123wlx.cn/vapi//v1/distributor/orders';
         $res = $this->http_request_post($url, $params);
         $result = json_decode($res, true);
         //判断是否下单成功
         if ($result['code'] == 200) {
-            return true;
+            return 'yes';
         } elseif ($result['code'] == 400) {
             //下单失败
-
+            return $result['message'];
         }
         return false;
     }
@@ -87,7 +91,8 @@ class MenPiao
     //生成签名
     public function getSign($params)
     {
-        $client_secret = 'fd1a7fec15a5';
+//        $client_secret = 'fd1a7fec15a5';
+        $client_secret = 'shihuituan123';
         ksort($params); //将参数数组按照参数名ASCII码从小到大排序
         foreach ($params as $key => $item) {
             if (!empty($item)) {  //剔除参数值为空的参数

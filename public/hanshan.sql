@@ -247,3 +247,6 @@ CREATE TABLE `ml_tbl_goods_format` (
   PRIMARY KEY (`id`),
   KEY `goods_id` (`goods_id`) USING BTREE
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COMMENT='商品规格表';
+
+
+ALTER TABLE ml_tbl_order ADD COLUMN `order_state` varchar(20) not null DEFAULT 0 COMMENT '第三方状态';
