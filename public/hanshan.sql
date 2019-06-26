@@ -250,3 +250,160 @@ CREATE TABLE `ml_tbl_goods_format` (
 
 
 ALTER TABLE ml_tbl_order ADD COLUMN `order_state` varchar(20) not null DEFAULT 0 COMMENT '第三方状态';
+
+
+ALTER TABLE ml_tbl_user ADD COLUMN `activity_mark` tinyint(1) not null DEFAULT 0 COMMENT '是否参加618 活动标识';
+ALTER TABLE xm_tbl_coupon ADD COLUMN `coup_type` tinyint(1) not null DEFAULT 0 COMMENT '0-不是活动优惠券,1-618活动优惠券';
+
+
+CREATE TABLE `ml_tbl_coupon_tmp` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `uid` int(11) NOT NULL DEFAULT 0 COMMENT '用户id',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COMMENT='优惠券临时表';
+
+ALTER TABLE ml_tbl_user ADD COLUMN `salsman_type` tinyint(1) not null DEFAULT 0 COMMENT '快到期弹框展示 0-显示 1-不显示';
+
+
+CREATE TABLE `ml_tbl_distributor` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `u_id` int(11) NOT NULL DEFAULT 0 COMMENT '用户id',
+  `u_name` VARCHAR(50) DEFAULT NULL COMMENT '用户名',
+  `tel` char(15)  DEFAULT null COMMENT '用户手机',
+  `price` decimal(10,2) NOT NULL DEFAULT 0 COMMENT '支付金额',
+  `c_time` int(10) NOT NULL DEFAULT 0 COMMENT '创建时间',
+  `pay_time` int(10) NOT NULL DEFAULT 0 COMMENT '支付时间',
+  `order_type` tinyint(1) NOT NULL DEFAULT 1 COMMENT '订单状态 1-待支付 2-支付完成',
+  `order_num` char(25) NOT NULL DEFAULT 0 COMMENT '订单编号',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COMMENT='分销员续费订单表';
+
+ALTER TABLE ml_tbl_Distributor ADD COLUMN `order_num` char(25) not null DEFAULT 0 COMMENT '订单编号';
+
+
+CREATE TABLE `ml_tbl_template_msg` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `form_id` int(11) NOT NULL DEFAULT 0 ,
+  `order_id` VARCHAR(50) DEFAULT NULL COMMENT '订单id',
+  `c_time` int(10) NOT NULL DEFAULT 0 COMMENT '创建时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COMMENT='订单模板消息';
+
+
+
+ALTER TABLE tb_article MODIFY COLUMN NAME VARCHAR(50);
+ALTER TABLE ml_tbl_wallet MODIFY balance DECIMAL(10,2)  NOT NULL DEFAULT 0;
+
+
+ALTER TABLE ml_tbl_withdraw ADD COLUMN `code` char(8) NOT NULL DEFAULT 0 COMMENT '验证码';
+ALTER TABLE ml_tbl_withdraw ADD COLUMN `status` tinyint(1) NOT NULL DEFAULT 0 COMMENT '0-未打款,1-打款 2-拒绝';
+
+
+
+CREATE TABLE `ml_tbl_event_goods` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `goods_name` varchar(255) DEFAULT NULL COMMENT '商品名称',
+  `goods_summary` varchar(255) DEFAULT NULL COMMENT '商品简介',
+  `goods_stock` int(11) DEFAULT NULL COMMENT '商品库存',
+  `goods_details` longtext COMMENT '商品详情',
+  `creat_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `ex_time` datetime DEFAULT NULL COMMENT '到期时间',
+  `is_online` TINYINT(1) DEFAULT '0' COMMENT '是否上架默认为0不上架 1上架',
+  `goods_price` DECIMAL(10,2) DEFAULT '1' COMMENT '商品售格',
+  `goods_original_price` float DEFAULT '1' COMMENT '商品原价',
+  `share_img` varchar(255) DEFAULT NULL COMMENT '分享图片',
+  `buy_limit` tinyint(1) NOT NULL DEFAULT '0' COMMENT '0-没有限购 1-最低限购 2-最高限购',
+  `buy_limit_num` tinyint(3) NOT NULL DEFAULT '0' COMMENT '限购数量',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+CREATE TABLE `ml_tbl_event_order` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `order_id` varchar(255) NOT NULL COMMENT '订单编号',
+  `order_type` TINYINT(1) DEFAULT NULL COMMENT '订单状态1.待支付2.待发货3.待收货4.已完成5.已取消',
+  `user_id` int(11) DEFAULT NULL,
+  `coupon_id` int(11) DEFAULT NULL COMMENT '优惠券id',
+  `goods_id` int(11) NOT NULL DEFAULT 0 COMMENT '商品id',
+  `goods_num` int(11) NOT NULL DEFAULT 0 COMMENT '商品数量',
+  `express_no` char(30) NOT NULL DEFAULT 0 COMMENT '运单号',
+  `freight` float DEFAULT NULL COMMENT '运费',
+  `goods_price` float DEFAULT NULL COMMENT '商品价格',
+  `pay_price` float DEFAULT NULL COMMENT '付款金额',
+  `creat_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `pay_time` datetime DEFAULT NULL COMMENT '支付时间',
+  `user_name` varchar(255) DEFAULT NULL COMMENT '联系人姓名',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+CREATE TABLE `ml_tbl_event_member` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) DEFAULT NULL,
+  `user_name` varchar(30) DEFAULT NULL COMMENT '用户名',
+  `tel` char(14) NOT NULL DEFAULT 0 COMMENT '手机号',
+  `address` varchar(255) NOT NULL DEFAULT 0 COMMENT '收货地址',
+  `pid` int(11) NOT NULL DEFAULT 0 COMMENT '团长id',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+CREATE TABLE `ml_tbl_event_banner` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `event_id` int(11) DEFAULT NULL,
+  `img` varchar(255) DEFAULT NULL ,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+
+
+
+ALTER TABLE ml_tbl_goods_format ADD COLUMN `business_price` DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '商户结算价格';
+ALTER TABLE ml_tbl_event_member ADD COLUMN `but_num` int(11) NOT NULL DEFAULT 0 COMMENT '购买分数';
+
+ALTER TABLE ml_tbl_event_member ADD COLUMN `head_img` int(11) NOT NULL DEFAULT 0 COMMENT '头像';
+
+ALTER TABLE ml_tbl_event_goods ADD COLUMN `head_img` varchar(255) NOT NULL DEFAULT 0 COMMENT '头像';
+ALTER TABLE ml_tbl_event_goods ADD COLUMN `goods_bonus` decimal(10,2) NOT NULL DEFAULT 0 COMMENT '返佣';
+
+ALTER TABLE ml_tbl_event_goods ADD COLUMN `format` varchar(10) NOT NULL DEFAULT 0 COMMENT '规格';
+ALTER TABLE ml_tbl_event_goods ADD COLUMN `content` varchar(255) NOT NULL DEFAULT 0 COMMENT '分享文本';
+ALTER TABLE ml_tbl_event_order ADD COLUMN `arrival_time` varchar(255) NOT NULL DEFAULT '2019-07-01' COMMENT '到货时间';
+ALTER TABLE ml_tbl_event_member ADD COLUMN `lng` char(50) NOT NULL DEFAULT '0.0' COMMENT '经度';
+ALTER TABLE ml_tbl_event_member ADD COLUMN `lat` char(50) NOT NULL DEFAULT '0.0' COMMENT '纬度';
+
+
+ALTER TABLE ml_tbl_user ADD COLUMN `from_id` char(100) NOT NULL DEFAULT 0 COMMENT '小程序formid';
+
+
+ALTER TABLE ml_tbl_event_order ADD COLUMN `lead_id` int(11) NOT NULL DEFAULT 0 COMMENT '团长id';
+ALTER TABLE ml_tbl_event_order ADD COLUMN `user_name` varchar(100)  DEFAULT null  COMMENT '用户名';
+ALTER TABLE ml_tbl_event_order ADD COLUMN `tel` char(11) NOT NULL DEFAULT 0 COMMENT '电话';
+
+CREATE TABLE `ml_tbl_event_rcode` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `goods_id` int(11) DEFAULT NULL,
+  `lead_id` int(11) DEFAULT NULL,
+  `url` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+
+CREATE TABLE `ml_tbl_event_lead` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) DEFAULT NULL,
+  `user_name` varchar(30) DEFAULT NULL COMMENT '用户名',
+  `tel` char(14) NOT NULL DEFAULT 0 COMMENT '手机号',
+  `address` varchar(255) NOT NULL DEFAULT 0 COMMENT '收货地址',
+  `event_id` int(11) NOT NULL DEFAULT 1 COMMENT '活动届数',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+
+
+CREATE TABLE `ml_tbl_event_push_king` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `event_name` int(11) DEFAULT NULL,
+  `start_time` varchar(30) DEFAULT NULL COMMENT '用户名',
+  `end_time` char(14) NOT NULL DEFAULT 0 COMMENT '手机号',
+  `event_img` varchar(255) NOT NULL DEFAULT 0 COMMENT '收货地址',
+  `event_id` int(11) NOT NULL DEFAULT 1 COMMENT '活动届数',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;

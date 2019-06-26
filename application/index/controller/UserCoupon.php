@@ -34,8 +34,13 @@ class UserCoupon extends Controller
                 }else{
                     $gid = 0;
                 }
-                $goods_info = Db::name('ml_tbl_goods')->where('id',$gid)->field('goods_class,business_id')->find();
-                $listInfo = Db::name($this->table)->where('user_id',$all['user_id'])->select();
+                if (isset($all['sizeid']) && !empty($all['sizeid'])){
+                    $sizeid = $all['sizeid'];
+                }else{
+                    $sizeid = 0;
+                }
+                $goods_info = Db::name('ml_tbl_goods_two')->where('id',$gid)->field('goods_class,business_id')->find();
+                $listInfo = Db::name($this->table)->where('user_id',$all['user_id'])->where('use_status',1)->select();
                 $business = Db::name('ml_tbl_business')->field('id')->select();
                 $bid = [];
                 foreach ($business as $key=>$val){
@@ -44,28 +49,40 @@ class UserCoupon extends Controller
                 $goods_class = $goods_info['goods_class'];
                 $goods_business = $goods_info['business_id'];
                 foreach ($listInfo as $k=>$v){
-                    if ($goods_class) {
-                        if (($v['business_id'] == $goods_business) || ($v['business_id'] == 0 )) {
+                    if ($v['use_type'] == 1) {
 
-                            if ($v['use_type'] !== 1) {
-                                if ($v['use_type'] == $goods_class) {
-                                    $listInfo[$k]['is_use'] = 1;
-                                    $listInfo[$k]['is_useInfo'] = '';
-                                } else {
-                                    $listInfo[$k]['is_use'] = 0;
-                                    $listInfo[$k]['is_useInfo'] = '商品种类不符合优惠券使用规则';
-                                }
-                            } else {
-                                $listInfo[$k]['is_use'] = 1;
-                                $listInfo[$k]['is_useInfo'] = '';
-                            }
-                        }else{
-                            $listInfo[$k]['is_use'] = 0;
-                            $listInfo[$k]['is_useInfo'] = '该商品不适用与本店';
-                        }
-                    } else {
                         $listInfo[$k]['is_use'] = 1;
                         $listInfo[$k]['is_useInfo'] = '';
+                    } else {
+                        if (isset($goods_class) && !empty($goods_class)){
+                            if ($v['use_type'] == $goods_class) {
+                                if (isset($goods_business) && !empty($goods_business)){
+                                    if ($v['business_id'] == 0){
+                                        $listInfo[$k]['is_use'] = 1;
+                                        $listInfo[$k]['is_useInfo'] = '';
+                                    }else{
+                                        if ($v['business_id'] == $goods_business) {
+
+                                            $listInfo[$k]['is_use'] = 1;
+                                            $listInfo[$k]['is_useInfo'] = '';
+                                        }else{
+                                            $listInfo[$k]['is_use'] = 0;
+                                            $listInfo[$k]['is_useInfo'] = '该商品不适用与本店';
+                                        }
+                                    }
+                                }else{
+                                    $listInfo[$k]['is_use'] = 1;
+                                    $listInfo[$k]['is_useInfo'] = '';
+                                }
+                            }else{
+//                                $v['is_use'] = 0;
+                                $listInfo[$k]['is_use'] = 0;
+                                $listInfo[$k]['is_useInfo'] = '商品种类不符合优惠券使用规则';
+                            }
+                        }else{
+                            $listInfo[$k]['is_use'] = 1;
+                            $listInfo[$k]['is_useInfo'] = '';
+                        }
                     }
                 }
                 return json(['status'=>1001,'msg'=>'成功','data'=>$listInfo]);

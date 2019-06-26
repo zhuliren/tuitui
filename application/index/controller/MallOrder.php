@@ -9,6 +9,7 @@
 namespace app\index\controller;
 
 
+use app\common\Model\PublicEnum;
 use app\index\Controller;
 use app\index\model\MallBonus;
 use app\index\model\MallUserWallet;
@@ -291,7 +292,7 @@ class MallOrder extends Controller
         $orderdatasum = array('order_id' => $order_id, 'type' => 2, 'creat_time' => date("Y-m-d h:i:s", time()));
         Db::table('ml_xm_order_summary')->insert($orderdatasum);
         //转换购物车商品到优惠券
-        $intoorderdata = array('order_zid' => $order_zid, 'goods_id' => $goods_id, 'goods_num' => $goods_num, 'goods_price' => $goods_price,'format_id'=>$sizeid);
+        $intoorderdata = array('order_zid' => $order_zid, 'goods_id' => $goods_id, 'goods_num' => $goods_num, 'goods_price' => $goods_price,'type'=>1,'format_id'=>$sizeid);
         Db::table('ml_tbl_order_details')->insert($intoorderdata);
         //修改商品库存
         $new_goods_stock = $goods_stock - $goods_num;
@@ -311,6 +312,14 @@ class MallOrder extends Controller
         $goods_num = $_REQUEST['goodsnum'];
         $user_name = filter_Emoji($_REQUEST['username']);
         $sizeid = $this->request->param('sizeid');
+
+        if ($goods_id == 695){
+            $sql = "SELECT * FROM ml_tbl_order AS o JOIN ml_tbl_order_details AS d ON o.id=d.order_zid WHERE o.user_id = {$user_id} AND d.goods_id = {$goods_id} ";
+            $limit_user_buy = Db::query($sql);
+            if ($limit_user_buy){
+                return responseError([],4001,'该商品只可购买一次或有订单未完成');
+            }
+        }
 
         if (preg_mobile($_REQUEST['phone'])){
             $phone = $_REQUEST['phone'];
@@ -601,5 +610,54 @@ class MallOrder extends Controller
             $data = array('status' => 0, 'msg' => '成功', 'data' => '');
         }
         return json($data);
+    }
+
+
+    public function renewalDisTri()
+    {
+        $uid = $this->request->param('uid');
+        $name = $this->request->param('name');
+        $tel = $this->request->param('phone');
+        $price = $this->request->param('price');
+
+
+        if ($price < 398){
+            return json(['status'=>5001,'msg'=>'价格错误','data'=>'']);
+        }
+        if (isset($uid) && !empty($uid)){
+            $user_info = Db::name('ml_tbl_user')->where('id',$uid)->find();
+
+            if (empty($user_info)){
+                return json(['status'=>2001,'msg'=>'用户不存在','data'=>'']);
+            }
+
+            if ($user_info['is_salesman'] != 1){
+                return json(['status'=>3010,'msg'=>'请先绑定商城项目','data'=>'']);
+
+            }
+        }
+        $order_num = randomOrder_no();
+        $order_status = Db::name('ml_tbl_distributor')->where('order_num', $order_num)->find();
+        if ($order_status) {
+            $order_num = randomOrder_no();
+            $order_status = Db::name('ml_tbl_distributor')->where('order_num', $order_num)->find();
+
+        }
+        $arr = [
+            'u_id' => $uid,
+            'u_name' => $name,
+            'tel' => $tel,
+            'price' => $price,
+            'c_time' => time(),
+            'order_type' => PublicEnum::ORDER_UNRECEIVED,
+            'order_num' => $order_num,
+        ];
+        $order_id = Db::name('ml_tbl_distributor')->insertGetId($arr);
+
+        if ($order_id ){
+            return json(['status'=>1001,'msg'=>'成功','data'=>$order_id]);
+        }else{
+            return json(['status'=>2001,'msg'=>'新增失败','data'=>'']);
+        }
     }
 }

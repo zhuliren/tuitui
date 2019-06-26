@@ -23,18 +23,31 @@ class Goods extends Controller
         $this->request = $request;
     }
 
+    /**
+     * @return \think\response\Json
+     * @time: 2019/6/11
+     * @autor: duheyuan
+     * @throws \think\Exception
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     * 所有上线商品
+     */
     public function allgoodsList()
     {
         $limit = $_REQUEST['limit'];
         $page = $_REQUEST['page'];
         $goods_class = $_REQUEST['class'];
         $start = $page * $limit;
+        $search = $this->request->param('search');
 
+        $sql = "SELECT * FROM `ml_tbl_goods_two` WHERE is_online=1  ";
         if ($goods_class == 1) {
             //商品列表
-            $goods['total'] = Db::name('ml_tbl_goods')->where('is_online',1)->count();
-            $goods['goods_list'] = Db::table('ml_tbl_goods')->where('is_online', 1)->limit($start, $limit)->order('id','desc')
-                ->field('id,head_img,goods_name,goods_stock,bonus_price,goods_price,goods_original_price,goods_sell_out,goods_class,type,ex_time,is_online')->select();
+            $goods['total'] = count(Db::query($sql));
+            $sql .= " AND goods_name like '%{$search}%' ORDER BY `id` DESC  LIMIT $start,$limit ";
+            $goods['goods_list'] = Db::query($sql);
+
             if ($goods) {
                 $data = array('status' => 0, 'msg' => '成功', 'data' => $goods);
                 return json($data);
@@ -43,9 +56,11 @@ class Goods extends Controller
                 return json($data);
             }
         } else {
-            $goods['total'] = Db::name('ml_tbl_goods')->where('is_online',1)->where('goods_class', $goods_class)->count();
-            $goods['goods_list'] = Db::table('ml_tbl_goods')->where('is_online', 1)->where('goods_class', $goods_class)->limit($start, $limit)->order('id','desc')
-                ->field('id,head_img,goods_name,goods_stock,bonus_price,goods_price,goods_original_price,goods_sell_out,goods_class,type,ex_time,is_online')->select();
+            $sql .= " AND goods_class={$goods_class} ";
+            $goods['total'] = count(Db::query($sql));
+            $sql .= " AND goods_name like '%{$search}%' ORDER BY `id` DESC  LIMIT $start,$limit ";
+            $goods['goods_list'] = Db::query($sql);
+
             if ($goods) {
                 $data = array('status' => 0, 'msg' => '成功', 'data' => $goods);
                 return json($data);
@@ -56,19 +71,29 @@ class Goods extends Controller
         }
     }
 
-    public function getUnlineGoods(Request $request)
+    /**
+     * @return \think\response\Json
+     * @time: 2019/6/11
+     * @autor: duheyuan
+     * @throws \think\Exception
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     * 所有下线商品
+     */
+    public function getUnlineGoods()
     {
-
-
         $limit = $_REQUEST['limit'];
         $page = $_REQUEST['page'];
         $goods_class = $_REQUEST['class'];
-        $start = ($page-1) * $limit;
-
+        $start = $page * $limit;
+        $search = $this->request->param('search');
+        $sql = "SELECT * FROM `ml_tbl_goods_two` WHERE is_online=1  ";
         if ($goods_class == 1) {
             //商品列表
-            $goods['total'] = Db::name('ml_tbl_goods')->where('is_online',0)->count();
-            $goods['goods_list'] = Db::table('ml_tbl_goods')->where('is_online', 0)->limit($start, $limit)->field('id,head_img,goods_name,goods_stock,bonus_price,goods_price,goods_original_price,goods_sell_out,goods_class,type,ex_time')->select();
+            $goods['total'] = count(Db::query($sql));
+            $sql .= " AND goods_name like '%{$search}%' ORDER BY `id` DESC  LIMIT $start,$limit ";
+            $goods['goods_list'] = Db::query($sql);
             if ($goods) {
                 $data = array('status' => 0, 'msg' => '成功', 'data' => $goods);
                 return json($data);
@@ -77,9 +102,10 @@ class Goods extends Controller
                 return json($data);
             }
         } else {
-            $goods['total'] = Db::name('ml_tbl_goods')->where('is_online',0)->where('goods_class',$goods_class)->count();
-            $goods['goods_list'] = Db::table('ml_tbl_goods')->where('is_online', 0)->where('goods_class', $goods_class)->limit($start, $limit)->order('id','desc')
-                ->field('id,head_img,goods_name,goods_stock,bonus_price,goods_price,goods_original_price,goods_sell_out,goods_class,type,ex_time')->select();
+            $sql .= " AND goods_class={$goods_class} ";
+            $goods['total'] = count(Db::query($sql));
+            $sql .= " AND goods_name like '%{$search}%' ORDER BY `id` DESC  LIMIT $start,$limit ";
+            $goods['goods_list'] = Db::query($sql);
             if ($goods) {
                 $data = array('status' => 0, 'msg' => '成功', 'data' => $goods);
                 return json($data);
@@ -91,29 +117,56 @@ class Goods extends Controller
     }
 
 
+    /**
+     * @param Request $request
+     * @return \think\response\Json
+     * @time: 2019/6/11
+     * @autor: duheyuan
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     * 商品详情-后台
+     */
     public function getGoodsDetail(Request $request)
     {
-        $id = $request->param('id',0,'int');
+        $id = $request->param('goodsid',0,'int');
 
         if (isset($id) && !empty($id)){
-            $goods_detaile = [];
-
-            $goods_detaile['goods'] = Db::name('ml_tbl_goods')->where('id',$id)->find();
-            $goods_detaile['banner'] = Db::name('ml_tbl_goods_banner')->where('goods_id',$id)->select();
-            $goods_detaile['goodsshare']['content'] = Db::name('ml_tbl_goods_content')->where('gid',$id)->find();
-            $goods_detaile['goodsshare']['share_img'] = Db::name('ml_tbl_goods_img')->where('gid',$id)->select();
-            return json(['status'=>1001,'msg'=>'成功','data'=>$goods_detaile]);
+            $goods['info'] = Db::name('ml_tbl_goods_two')->where('id',$id)->find();
+            if (empty($goods['info'])){
+                return json(['status'=>5001,'msg'=>'商品不存在或商品已下架','data'=>'']);
+            }
+            if ($goods['info']['business_id']){
+                $goods['business'] = Db::name('ml_tbl_business')->where(['id'=>$goods['info']['business_id']])->whereOr(['pid'=>$goods['info']['business_id']])->field('id,business_name,business_hours,phone,business_address,latitude,longitude')->select();
+            }else{
+                $goods['business'] = [];
+            }
+            $goods['format'] = Db::name('ml_tbl_goods_format'  )->where('goods_id',$id)->select();
+            $goods['banner'] = Db::name('ml_tbl_goods_banner')->where('goods_id',$id)->column('img_url');
+            $goods['content'] = Db::name('ml_tbl_goods_content')->where('gid',$id)->column('content');
+            $goods['img'] = Db::name('ml_tbl_goods_img')->where('gid',$id)->column('url');
+            $goods['tag'] = Db::name('ml_tbl_goods_tag')->where('goods_id',$id)->column('tag');
+            return json(['status'=>1001,'msg'=>'成功','data'=>$goods]);
         }else{
-            return json(['status'=>2001,'msg'=>'参数错误','data'=>'']);
+            return json(['status'=>2001,'msg'=>'缺少必要参数','data'=>'']);
         }
     }
 
+    /**
+     * @param Request $request
+     * @return \think\response\Json
+     * @time: 2019/6/11
+     * @autor: duheyuan
+     * @throws \think\Exception
+     * @throws \think\exception\PDOException
+     * 修改商品基础信息
+     */
     public function editGoods(Request $request)
     {
         $all = $request->param();
 
         if (isset($all['id']) && !empty($all['id'])){
-            $res = Db::name('ml_tbl_goods')->where('id',$all['id'])->update($all);
+            $res = Db::name('ml_tbl_goods_two')->where('id',$all['id'])->update($all);
 
             return json(['status'=>1001,'msg'=>'成功','data'=>$res]);
 
@@ -121,6 +174,7 @@ class Goods extends Controller
             return json(['status'=>2001,'msg'=>'参数错误','data'=>'']);
         }
     }
+
 
 
     public function editGoodsBanner(Request $request)
@@ -257,9 +311,9 @@ class Goods extends Controller
 
         if (is_array($all['id'])){
 
-            $list = Db::name('ml_tbl_goods')->whereIn(['id'=>$all['id']])->update(['is_online'=>$all['online']]);
+            $list = Db::name('ml_tbl_goods_two')->whereIn(['id'=>$all['id']])->update(['is_online'=>$all['online']]);
         }else{
-            $list = Db::name('ml_tbl_goods')->where(['id'=>$all['id']])->update(['is_online'=>$all['online']]);
+            $list = Db::name('ml_tbl_goods_two')->where(['id'=>$all['id']])->update(['is_online'=>$all['online']]);
         }
 
         return json(['status'=>1001,'msg'=>'成功','data'=>$list]);
@@ -313,7 +367,7 @@ class Goods extends Controller
             return json(['status'=>2001,'msg'=>'参数错误','data'=>'']);
         }
 
-        $res = Db::name('ml_tbl_goods')->where(['id'=>$gid,'is_online'=>1])->update(['goods_sort'=>99]);
+        $res = Db::name('ml_tbl_goods_two')->where(['id'=>$gid,'is_online'=>1])->update(['goods_sort'=>99]);
         if ($res){
             return json(['status'=>1001,'msg'=>'成功','data'=>'']);
         }else{
@@ -344,8 +398,59 @@ class Goods extends Controller
         }else{
             return json(['status'=>5001,'msg'=>'商品不存在或已下架','data'=>'']);
         }
+    }
+
+    public function goodsFront(Request $request)
+    {
+        $gid = $request->param('id');
+        if (empty($gid)){
+            return json(['status'=>2001,'msg'=>'参数错误','data'=>'']);
+        }
+        $res = Db::name('ml_tbl_goods')->where(['id'=>$gid,'is_online'=>1])->update(['goods_sort'=>70]);
+        if ($res){
+            return json(['status'=>1001,'msg'=>'成功','data'=>'']);
+        }else{
+            return json(['status'=>5001,'msg'=>'商品不存在或已下架','data'=>'']);
+        }
 
     }
 
+    /**
+     * @return \think\response\Json
+     * @time: 2019/6/12
+     * @autor: duheyuan
+     * @throws \think\Exception
+     * @throws \think\exception\PDOException
+     * 修改
+     */
+    public function editGoodsFormat()
+    {
+        $all = $this->request->param();
+        $format = $all['format'];
+
+        foreach ($format as $k=>$v){
+            $v = json_decode($v, true);
+            if (isset($v['isSet'])){
+                unset($v['isSet']);
+            }
+            if (isset($v['id']) && !empty($v['id'])){
+                $res = Db::name('ml_tbl_goods_format')->where('id',$v['id'])->update($v);
+            }else{
+                $res_ =  Db::name('ml_tbl_goods_format')->insert($v);
+            }
+        }
+        if (isset($res) || isset($res_)){
+            return json(['status'=>'1001','msg'=>'成功','data'=>'']);
+        }else{
+            return json(['status'=>3001,'msg'=>'成功','data'=>'']);
+        }
+    }
+
+
+    public function goodsClerk()
+    {
+        $sql = "SELECT * FROM `ml_tbl_business_clerk` AS c JOIN `ml_tbl_business` AS b  ";
+
+    }
 
 }

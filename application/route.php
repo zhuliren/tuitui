@@ -60,6 +60,7 @@ Route::rule('couponGiveTo', 'index/Coupon/couponGiveTo');
 Route::rule('couponDetails', 'index/Coupon/couponDetails');
 //支付模块
 Route::rule('unifiedorder', 'index/WechatPay/unifiedorder');
+Route::rule('renewalFeeOrder', 'index/WechatPay/renewalFeeOrder');
 //商城用户模块
 Route::rule('userMallRegister', 'index/MallUser/userMallRegister');
 Route::rule('userMallShareRegister', 'index/MallUser/userMallShareRegister');
@@ -153,12 +154,20 @@ Route::rule('getIndexGoodsList', 'index/Mall/getIndexGoodsList');   //  商品�
 
 Route::rule('getTodayClerk', 'index/MallUser/getTodayClerk');   //  获取今日分销
 Route::rule('getMyClerk', 'index/MallUser/getMyClerk');   //  获取我的历史分销
+Route::rule('createCpn', 'index/User/createCpn');
+Route::rule('mustNow', 'index/MallUser/mustNow');
+Route::rule('sendTemplateMessage', 'index/MallUser/sendTemplateMessage');
+
+
+
 
 
 
 Route::rule('goodsOnline', 'admin/Goods/goodsOnline');   //  商品上下架
 
 
+Route::rule('editUserSales', 'index/MallUser/editUserSales');   //
+Route::rule('renewalDisTri', 'index/MallOrder/renewalDisTri');   //
 
 
 
@@ -181,7 +190,36 @@ Route::rule('newGoodsAdd', 'admin/Goods/goodsAdd');   //  新- 新增商品
 Route::rule('inserttag', 'admin/Goods/inserttag');   //  新- 新增商品标签
 Route::rule('goodsTop', 'admin/Goods/goodsTop');   //  商品必买置顶
 Route::rule('unGoodsTop', 'admin/Goods/unGoodsTop');   //  商品取消必买
+Route::rule('editGoodsFormat', 'admin/Goods/editGoodsFormat');   //  商品规格修改
+Route::rule('getOrderList', 'admin/Order/getOrderList');   // 订单类表
+Route::rule('goodsFront', 'admin/Goods/goodsFront');   // 商品提位
+Route::rule('cutWithdraw', 'admin/Withdraw/cutWithdraw');   // 提现完成
+Route::rule('refuseWithdraw', 'admin/Withdraw/refuseWithdraw');   // 提现拒绝
 
+
+
+/* ------- test    */
+Route::rule('testcpn', 'index/User/testcpn');
+
+
+Route::rule('getEventInfo', 'index/Event/getEventInfo');   // 活动首页
+Route::rule('joinActivity', 'index/Event/joinActivity');   // 参加活动
+Route::rule('eventGoodsInfo', 'index/Event/goodsInfo');   // 商品信息
+Route::rule('goodsShareUrl', 'index/Event/goodsShareUrl');   // 加入团长队伍
+Route::rule('buyGoods', 'index/Event/buyGoods');   // 下单页信息
+Route::rule('createEventOrder', 'index/Event/createEventOrder');   // 创建订单
+Route::rule('eventNotify', 'index/WechatPay/eventNotify');   // 订单回调
+Route::rule('eventPay', 'index/WechatPay/eventPay');   // 支付
+Route::rule('eventOrderList', 'index/Event/eventOrderList');   // 订单列表
+Route::rule('eventOrderDetail', 'index/Event/eventOrderDetail');   // 订单详情
+Route::rule('eventShareInfo', 'index/Event/shareInfo');   // 分享信息
+Route::rule('lookTeamOrder', 'index/Event/lookTeamOrder');   // 查看团队订单
+Route::rule('editOrderStatus', 'index/Event/editOrderStatus');   // 修改订单状态
+Route::rule('editJoinActivityType', 'index/Event/editJoinActivityType');   // 修改订单状态
+Route::rule('eventShareRcode', 'index/Event/eventShareRcode');   // 修改订单状态
+
+
+Route::rule('editFormId', 'index/User/editFormId');  // 修改form_id
 
 
 

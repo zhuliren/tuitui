@@ -54,15 +54,35 @@ class MallUser
             $userdetails = Db::query('SELECT * FROM ml_tbl_user WHERE wechat_open_id = ?', [$openid]);
             if (count($userdetails) == 0) {
                 //无用户信息，插入用户信息
-                $userdata = ['wechat_open_id' => $openid, 'created_time' => date("Y-m-d h:i:s", time())];
+                $userdata = ['wechat_open_id' => $openid, 'created_time' => date("Y-m-d H:i:s", time())];
                 $user_id = Db::table('ml_tbl_user')->insertGetId($userdata);
-                $returndata = array('user_id' => $user_id, 'openid' => $openid, 'is_salesman' => '0');
+                $activity = (new UserModel())->activityMark($user_id);
+
+                $returndata = array('user_id' => $user_id, 'openid' => $openid, 'is_salesman' => '0','mark'=>$activity);
                 $data = array('status' => 0, 'msg' => '登录成功', 'data' => $returndata);
                 return json($data);
             } else {
                 //返回用户信息
                 $userdetails = db('ml_tbl_user')->where('wechat_open_id', $openid)->find();
-                $returndata = array('user_id' => $userdetails['id'], 'openid' => $openid, 'is_salesman' => $userdetails['is_salesman']);
+                $days = (strtotime($userdetails['salesman_due'].' 23:59:59') - time()) /  (3600 * 24);
+                if (($days > 0) && ($days < 5)){
+                    $time_mark = 1 ;
+                }else{
+                    $time_mark = 1 ;
+                }
+                $activity = Db::name('ml_tbl_user')->where('id',$userdetails['id'])->find();
+                $lead_status = Db::name('ml_tbl_event_member')->where('user_id',$userdetails['id'])->find();
+                if ($lead_status){
+                    if ($lead_status['pid'] == 0){
+                        $lead = 1;
+                    }else{
+                        $lead = 0;
+                    }
+                }else{
+                    $lead = 0;
+                }
+
+                $returndata = array('user_id' => $userdetails['id'], 'openid' => $openid, 'is_salesman' => $userdetails['is_salesman'],'mark'=>$activity['activity_mark'],'time'=>$userdetails['salesman_due'], 'salsman_type'=>$userdetails['salsman_type'], 'time_mark'=>$time_mark);
                 $data = array('status' => 0, 'msg' => '登录成功', 'data' => $returndata);
                 return json($data);
             }
@@ -105,7 +125,7 @@ class MallUser
             $userdetails = Db::query('SELECT * FROM ml_tbl_user WHERE wechat_open_id = ?', [$openid]);
             if (count($userdetails) == 0) {
                 //无用户信息，插入用户信息
-                $userdata = ['wechat_open_id' => $openid, 'created_time' => date("Y-m-d h:i:s", time())];
+                $userdata = ['wechat_open_id' => $openid, 'created_time' => date("Y-m-d H:i:s", time())];
                 $user_id = Db::table('ml_tbl_user')->insertGetId($userdata);
                 $is_salesman = 0;
                 $returndata = array('user_id' => $user_id, 'openid' => $openid, 'is_salesman' => '0');
@@ -141,7 +161,7 @@ class MallUser
                                 $selectupxmid = Db::table('ml_xm_binding')->where('ml_user_id', $up_user_id)->find();
                                 $upxmid = $selectupxmid['xm_user_id'];
                                 //更新渠道表
-                                Db::table('ml_tbl_channel')->where('ml_user_id', $user_id)->update(['xm_user_id' => $upxmid, 'creat_time' => date("Y-m-d h:i:s", time())]);
+                                Db::table('ml_tbl_channel')->where('ml_user_id', $user_id)->update(['xm_user_id' => $upxmid, 'creat_time' => date("Y-m-d H:i:s", time())]);
                             }
                         }
                     }
@@ -153,7 +173,7 @@ class MallUser
                         $selectupxmid = Db::table('ml_xm_binding')->where('ml_user_id', $up_user_id)->find();
                         $upxmid = $selectupxmid['xm_user_id'];
                         //插入渠道表
-                        $userdata = ['ml_user_id' => $user_id, 'xm_user_id' => $upxmid, 'creat_time' => date("Y-m-d h:i:s", time())];
+                        $userdata = ['ml_user_id' => $user_id, 'xm_user_id' => $upxmid, 'creat_time' => date("Y-m-d H:i:s", time())];
                         Db::table('ml_tbl_channel')->insert($userdata);
                     }
                 }
@@ -204,7 +224,7 @@ class MallUser
             //判断用户密码是否正确
             $selectuserpwd = Db::table('xm_tbl_user')->where('id', $xm_user_id)->where('user_pwd', $xm_user_pwd)->value('user_pwd');
             if ($selectuserpwd) {
-                $userdata = ['ml_user_id' => $ml_user_id, 'xm_user_id' => $xm_user_id, 'creat_time' => date("Y-m-d h:i:s", time())];
+                $userdata = ['ml_user_id' => $ml_user_id, 'xm_user_id' => $xm_user_id, 'creat_time' => date("Y-m-d H:i:s", time())];
                 Db::table('ml_xm_binding')->insert($userdata);
                 $data = array('status' => 0, 'msg' => '成功', 'data' => '');
                 return json($data);
@@ -224,7 +244,7 @@ class MallUser
             $data = array('status' => 1, 'msg' => '已绑定过推推项目', 'data' => '');
             return json($data);
         } else {
-            $userdata = ['ml_user_id' => $ml_user_id, 'created_time' => date("Y-m-d h:i:s", time())];
+            $userdata = ['ml_user_id' => $ml_user_id, 'created_time' => date("Y-m-d H:i:s", time())];
             Db::table('ml_xm_binding')->insert($userdata);
             $data = array('status' => 0, 'msg' => '成功', 'data' => '');
             return json($data);
@@ -236,9 +256,12 @@ class MallUser
         $user_id = $_REQUEST['userid'];
         //查询用户是否绑定推推项目
         $userModel = new UserModel();
+        $wallet_edit = (new UserModel())->walletEdit($user_id);
+
         $isbinding = $userModel->mlxmBinding($user_id);
         $issalesman = Db::table('ml_tbl_user')->where('id', $user_id)->find();
-        $myDistriMoney = $userModel->getDistributionMoney($user_id);
+//        $myDistriMoney = $userModel->getDistributionMoney($user_id);
+        $myDistriMoney = Db::name('ml_tbl_wallet')->where('user_id',$user_id)->find();
         if ($isbinding) {
             //获取用户在推推项目的id
             $selectxmuserid = Db::table('ml_xm_binding')->where('ml_user_id', $user_id)->find();
@@ -249,9 +272,9 @@ class MallUser
             } else {
                 $coupon_num = 0;
             }
-            $returndata = array('coupon_num' => $coupon_num, 'user_id' => $user_id, 'isbinding' => 1, 'issalesman' => $issalesman['is_salesman'], 'myDistriMoney'=>$myDistriMoney);
+            $returndata = array('coupon_num' => $coupon_num, 'user_id' => $user_id, 'isbinding' => 1, 'issalesman' => $issalesman['is_salesman'], 'myDistriMoney'=>$myDistriMoney['balance']);
         } else {
-            $returndata = array('coupon_num' => 0, 'user_id' => $user_id, 'isbinding' => 1, 'issalesman' => $issalesman['is_salesman'], 'myDistriMoney'=>$myDistriMoney);
+            $returndata = array('coupon_num' => 0, 'user_id' => $user_id, 'isbinding' => 1, 'issalesman' => $issalesman['is_salesman'], 'myDistriMoney'=>$myDistriMoney['balance']);
         }
         $data = array('status' => 1, 'msg' => '未绑定', 'data' => $returndata);
         return json($data);
@@ -328,7 +351,7 @@ class MallUser
                 $ids .= $v['ml_user_id'] . ',';
             }
             $ids = rtrim($ids,',');
-            $list = Db::name('ml_tbl_order')->whereIn('user_id',$ids)->count();
+            $list = Db::name('ml_tbl_order')->whereIn('user_id',$ids)->whereIn('order_type','1,2,3,6')->count();
             if ($list > 0) {
                 return json(['status' => 1001, 'msg' => '成功', 'data' => $list]);
             } else {
@@ -365,10 +388,13 @@ class MallUser
             $goodsId .= $v['id'] . ',';
         }
         $goodsId = rtrim($goodsId,',');
-        $goodsDetail = Db::name('ml_tbl_order_details')->whereIn('order_zid', $goodsId)->field('goods_id,goods_num')->select();
+        $goodsDetail = Db::name('ml_tbl_order_details')->whereIn('order_zid', $goodsId)->field('goods_id,goods_num,format_id')->select();
         $data['distriMoney'] = 0;
         foreach ($goodsDetail as $k => $v) {
             $bouns_price = Db::name('ml_tbl_goods')->where('id', $v['goods_id'])->field('bonus_price')->find();
+            if (!$bouns_price){
+                $bouns_price['bonus_price'] = Db::name('ml_tbl_goods_format')->where('id',$v['format_id'])->field('first_bonus')->find();
+            }
             $data['distriMoney'] += $bouns_price['bonus_price'] * $v['goods_num'];
         }
         $ctime = '';
@@ -697,5 +723,162 @@ class MallUser
             return json(['status'=>5001,'msg'=>'请求方法错误','data'=>'']);
         }
     }
+
+    public function  editUserSales()
+    {
+
+        $userdetails = Db::name('ml_tbl_user')->where('id',1694)->find();
+        dd((strtotime($userdetails['salesman_due'].' 23:59:59') - time()) /  (3600 * 24));
+
+
+
+        $uid = $_REQUEST['uid'];
+
+        $res = Db::name('ml_tbl_user')->where(['id'=>$uid])->update(['salsman_type'=>1]);
+
+        if ($res){
+            return json(['status'=>1001,'msg'=>'成功','data'=>'']);
+        }else{
+            return json(['status'=>3001,'msg'=>'失败','data'=>'']);
+        }
+    }
+
+
+    /**
+     * @return string
+     */
+    public function mustNow()
+    {
+        $res = Db::name('ml_tbl_user_pact')->where('id',2)->find();
+        return json(['status'=>1001,'msg'=>'成功','data'=>$res]);
+    }
+
+
+    public function getToken($appid,$secret){
+
+        $url ="https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={$appid}&secret={$secret}";
+        $res = $this->curl_get($url);
+        $res = json_decode($res,1);
+        if (isset($res['errcode'])){
+            if ($res['errcode'] != 0){
+                return json(['status'=>$res['errmsg'],'msg'=>'失败','data'=>'']);
+            }
+        }
+        return $res['access_token'];
+    }
+
+
+    public function sendTemplateMessage()
+    {
+        $form_id  = $this->request->param('form_id');
+        $uid  = $this->request->param('uid');
+        $order_id  = $this->request->param('order_id');
+
+        $order_info = Db::name('ml_tbl_order')->where('order_id',$order_id)->find();
+        $order_detail = Db::name('ml_tbl_order_details')->where('order_zid',$order_info['id'])->find();
+        $goods_info = Db::name('ml_tbl_goods_two')->where('id',$order_detail['goods_id'])->find();
+        if (($order_info['order_type'] == 6) || ($order_info['order_type'] == 2)){
+            $tmp_id = PublicEnum::ORDER_PAY;
+        }elseif($order_info['order_type'] == 0){
+            $tmp_id = PublicEnum::ORDER_NOPAY;
+        }
+        $user_info = Db::name('ml_tbl_user')->where('id',$uid)->find();
+        // 检验uid合法性 防止非法越界
+        $nickname = $user_info['user_name'];  // 用户昵称
+        // 此openid为小程序的openid切勿与微信自动登录的openid混淆
+        $xcx_open['openid'] = $user_info['wechat_open_id'];
+        // openid可以通过PHP接口或者小程序获取
+        if ($xcx_open['openid']) {
+            $temp_msg = array(
+                'touser' => "{$xcx_open['openid']}",
+                'template_id' => $tmp_id,
+                'page' => "/pages/index/index",
+                'form_id' => "{$form_id}",
+                'data' => array(
+                    'keyword1' => array(
+                        'value' => $goods_info['goods_name'],
+                    ),
+                    'keyword2' => array(
+                        'value' => $order_info['creat_time'],
+                    ),
+                    'keyword3' => array(
+                        'value' => $order_info['pay_price'],
+                    ),
+                    'keyword4' => array(
+                        'value' => $order_id,
+                    ),
+                ),
+            );
+
+            $res = $this->sendXcxTemplateMsg($temp_msg);
+
+            return $res;
+        }
+    }
+
+
+    public function sendXcxTemplateMsg($data)
+    {
+
+        $access_token = $this->getToken($this->appid,$this->secret);
+        $url = "https://api.weixin.qq.com/cgi-bin/message/wxopen/template/send?access_token={$access_token}";
+        $res =  curl_post($url, $data);
+
+        return $res;
+    }
+
+
+    public function sendOrderMessage()
+    {
+        $form_id  = $this->request->param('form_id');
+        $uid  = $this->request->param('uid');
+        $order_id  = $this->request->param('order_id');
+
+        $order_info = Db::name('ml_tbl_distributor')->where('id',$order_id)->find();
+
+        if ($order_info['order_type'] == 1){
+            $tmp_id = PublicEnum::ORDER_PAY;
+        }else{
+            $tmp_id = PublicEnum::ORDER_NOPAY;
+        }
+        $user_info = Db::name('ml_tbl_user')->where('id',$uid)->find();
+        // 检验uid合法性 防止非法越界
+        $nickname = $user_info['user_name'];  // 用户昵称
+        // 此openid为小程序的openid切勿与微信自动登录的openid混淆
+        $xcx_open['openid'] = $user_info['wechat_open_id'];
+        // openid可以通过PHP接口或者小程序获取
+        if ($xcx_open['openid']) {
+            $temp_msg = array(
+                'touser' => "{$xcx_open['openid']}",
+                'template_id' => $tmp_id,
+                'page' => "/pages/index/index",
+                'form_id' => "{$form_id}",
+                'data' => array(
+                    'keyword1' => array(
+                        'value' => '分销商续费',
+                    ),
+                    'keyword2' => array(
+                        'value' => date('Y-m-d H:i:s',$order_info['c_time']),
+                    ),
+                    'keyword3' => array(
+                        'value' => $order_info['price'],
+                    ),
+                    'keyword4' => array(
+                        'value' => $order_info['order_num'],
+                    ),
+                ),
+            );
+
+            $res = $this->sendXcxTemplateMsg($temp_msg);
+
+            return $res;
+        }
+    }
+
+
+
+
+
+
 
 }

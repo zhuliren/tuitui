@@ -9,6 +9,7 @@
 namespace app\index\controller;
 
 
+use app\common\Model\PublicEnum;
 use app\index\model\UserModel;
 use think\Db;
 use think\Request;
@@ -482,16 +483,15 @@ class user
         if ($request->isPost()){
             $all = $request->param();
             if (isset($all['id']) && !empty($all['id'])){
-                $userBank = Db::name('ml_tbl_user_bank_card')->where('uid',$all['id'])->find();
-                if (!$userBank){
-                    return json(['status'=>3002,'msg'=>'未绑定银行卡,请先绑定银行卡','data'=>'']);
-                }
                 $userInfo = Db::name('ml_tbl_user')->where('id',$all['id'])->find();
                 if ($userInfo <= 0){
                     return json(['status'=>3001,'msg'=>'该用户不存在','data'=>'']);
                 }
                 if(!isset($all['amount']) || empty($all['amount'])){
                     return json(['status'=>2001,'msg'=>'参数错误','data'=>'']);
+                }
+                if ($all['amount'] <= 0){
+                    return json(['status'=>2001,'msg'=>'提现金额错误错误','data'=>'']);
                 }
                 $arr = [
                     'uid'=>$all['id'],
@@ -500,16 +500,35 @@ class user
                     'ctime'=>time(),
                     'desc'=>'提现'
                 ];
+                //  查看订单号是否存在
+                $order_status = Db::name('ml_tbl_withdraw')->where(['order_no'=>$arr['order_no']])->find();
+                if ($order_status){
+                    $arr['order_no'] = randomOrder_no();
+                }
+                //  生成八位码
+                $eight = strtoupper(substr(md5(md5($arr['order_no'])),0,8 ));
+                $arr['code'] = $eight;
+                $code_status = Db::name('ml_tbl_withdraw')->where('code',$eight)->find();
+                if ($code_status){
+                    $arr['order_no'] = randomOrder_no();
+                    $eight = strtoupper(substr(md5(md5($arr['order_no'])),0,8 ));
+                }
+                //  钱包余额
                 $now_balance = Db::name('ml_tbl_wallet')->where('user_id',$all['id'])->value('balance');
+                //判断余额是否小于提现数额
                 if ($all['amount'] > $now_balance){
                     return json(['status'=>3005,'msg'=>'可提现余额不足','data'=>'']);
                 }
-
-                Db::name('ml_tbl_wallet')->where('user_id',$all['id'])->setDec('balance',$all['amount']);
+                Db::startTrans();
+                $wallet_status = Db::name('ml_tbl_wallet')->where('user_id',$all['id'])->setDec('balance',$all['amount']);
+                //  操作失败回退
+                if (!$wallet_status){ Db::rollback(); }
                 $res = Db::name('ml_tbl_withdraw')->insert($arr);
                 if ($res >0 ){
-                    return json(['status'=>1001,'msg'=>'成功','data'=>'']);
+                    Db::commit();
+                    return json(['status'=>1001,'msg'=>'成功','data'=>$eight]);
                 }else{
+                    Db::rollback();
                     return json(['status'=>5001,'msg'=>'订单号提交失败,请重新点击','data'=>'']);
                 }
             }else{
@@ -730,15 +749,89 @@ class user
 
     }
 
-    public function insertUser(Request $request)
+    public function testcpn(Request $request)
     {
-        $all = $request->param();
 
-        $res = Db::name('ml_tbl_user')->insertGetId($all);
+
+        $uid = $request->param('id');
+        $res = (new UserModel())->activityMark($uid);
+        if ($res){
+            dd(1111);
+        }else{
+            dd(2222);
+        }
 
         return json(['status'=>1001,'msg'=>'成功','data'=>$res]);
 
     }
+
+    public function createCpn()
+    {
+        $uid = $_REQUEST['uid'];
+        $type = $_REQUEST['type'];
+        $money = $_REQUEST['money'];
+
+        $arr = [
+            'pro_id'=>1,
+            'discount'=>0,
+            'coupon_type'=>2,
+            'last_time'=>'2019-06-20 23:59:59',
+            'user_id'=>$uid,
+            'use_status'=>1,
+            'business_id'=>0,
+            'coup_type'=>1,
+        ];
+        if ($money == 1){
+            $arr[] = [
+                'par_value'=>8,
+                'coupon_name'=>'8元抵用券',
+                'coupon_value'=>'618活动专用,请注意使用时间!',
+                'use_type'=>PublicEnum::FRUIT,
+            ];
+
+        }else{
+            $arr[] = [
+                'par_value'=>10,
+                'coupon_name'=>'10元抵用券',
+                'coupon_value'=>'618活动专用,请注意使用时间!',
+                'use_type'=>PublicEnum::ORDER_UNRECEIVED,
+            ];
+        }
+
+
+        Db::startTrans();
+        if ($type == 1){
+            Db::startTrans();
+            $res = Db::name('xm_tbl_coupon')->insert($arr);
+            if (!$res){
+                Db::rollback();
+            }
+            if ($money == 1){
+                $res_ = Db::name('ml_tbl_user')->where('id',$uid)->update(['activity_mark'=>1]);
+                if (!$res_){
+                    Db::rollback();
+                }
+            }
+            Db::commit();
+            return json(['status'=>1001,'msg'=>'成功','data'=>'']);
+        }else{
+            $res_ = Db::name('ml_tbl_user')->where('id',$uid)->update(['activity_mark'=>1]);
+
+            if (!$res_){
+                Db::rollback();
+                return json(['status'=>3001,'msg'=>'失败','data'=>'']);
+
+            }else{
+                Db::commit();
+                return json(['status'=>1001,'msg'=>'成功','data'=>'']);
+            }
+        }
+    }
+
+
+
+
+
 
 
 

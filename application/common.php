@@ -25,7 +25,7 @@ function filter_Emoji($str)
 }
 
 function preg_mobile($mobile) {
-    if(preg_match("/^1[34578]\d{9}$/", $mobile)) {
+    if(preg_match("/^(13[0-9]|14[5|7|9]|15[0|1|2|3|5|6|7|8|9]|16[6]|17[0|1|2|3|5|6|7|8]|18[0-9]|19[8|9])\d{8}$/", $mobile)) {
         return TRUE;
     } else {
         return FALSE;
@@ -41,7 +41,7 @@ function preg_id_card($id_card){
 }
 
 
-
+//  随机订单号
 function randomOrder_no()
 {
     $time =date('Ymd',time());
@@ -54,7 +54,7 @@ function randomOrder_no()
     }
     return $res;
 }
-
+//  名字正则
 function namePreg($name)
 {
     if (isset($name) && !empty($name)){
@@ -71,14 +71,14 @@ function namePreg($name)
 
 /**
  * 创建(导出)Excel数据表格
- * @param  array   $list        要导出的数组格式的数据
- * @param  string  $filename    导出的Excel表格数据表的文件名
- * @param  array   $indexKey    $list数组中与Excel表格表头$header中每个项目对应的字段的名字(key值)
- * @param  array   $startRow    第一条数据在Excel表格中起始行
- * @param  [bool]  $excel2007   是否生成Excel2007(.xlsx)以上兼容的数据表
- * 比如: $indexKey与$list数组对应关系如下:
- *     $indexKey = array('id','username','sex','age');
- *     $list = array(array('id'=>1,'username'=>'YQJ','sex'=>'男','age'=>24));
+ * @param  array $list 要导出的数组格式的数据
+ * @param  string $filename 导出的Excel表格数据表的文件名
+ * @param  array $indexKey $list数组中与Excel表格表头$header中每个项目对应的字段的名字(key值)
+ * @param int $startRow 第一条数据在Excel表格中起始行
+ * @param bool $excel2007
+ * @return bool
+ * @throws PHPExcel_Exception
+ * @throws PHPExcel_Writer_Exception
  */
 function toExcel($list,$filename,$indexKey,$startRow=1,$excel2007=false){
     //文件引入
@@ -143,7 +143,7 @@ function toExcel($list,$filename,$indexKey,$startRow=1,$excel2007=false){
     header("Content-Transfer-Encoding:binary");
     $objWriter->save('php://output');
 }
-
+//  断点打印
 function dd($list)
 {
     dump($list);die;
@@ -160,4 +160,123 @@ function object_array($array) {
         }
     }
     return $array;
+}
+// post请求接口数据
+function curl_post($url,$post_data)
+{
+    $curl = curl_init();
+    //设置抓取的url
+    curl_setopt($curl, CURLOPT_URL, $url);
+     //设置头文件的信息作为数据流输出
+    curl_setopt($curl, CURLOPT_HEADER, 1);
+    //设置获取的信息以文件流的形式返回，而不是直接输出。
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+    //设置post方式提交
+    curl_setopt($curl, CURLOPT_POST, 1);
+     //设置post数据
+    $post_data = json_encode($post_data);
+     curl_setopt($curl, CURLOPT_POSTFIELDS, $post_data);
+     //执行命令
+     $data = curl_exec($curl);
+     //关闭URL请求
+     curl_close($curl);
+
+     return $data;
+}
+
+function curl_get($url){
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    $result = curl_exec($ch);
+    curl_close($ch);
+    return $result;
+}
+
+
+/**
+ * @param array $array 要整理的数组
+ * @param string $key 要取出的键值
+ * @return string      取出的值拼接成的字符串
+ * @time: 2019/6/18
+ * @autor: duheyuan
+ * 键值拼接 数组转字符串
+ */
+function idsArrayToStr($array = [] , $key = 'id')
+{
+    $ids = '';
+    foreach ($array as $k=>$v){
+        $ids .= $v[$key] . ',';
+    }
+    $ids = rtrim($ids,',');
+
+    return $ids;
+
+}
+
+function array_sort($arr){
+    if(empty($arr)) return $arr;
+    foreach($arr as $k => $a){
+        if(!is_array($a)){
+            arsort($arr); // could be any kind of sort
+            return $arr;
+        }else{
+            $arr[$k] = array_sort($a);
+        }
+    }
+    return $arr;
+}
+
+/**
+ * 二维数组根据某个字段排序
+ * @param array $array 要排序的数组
+ * @param string $keys 要排序的键字段
+ * @param int $sort 排序类型  SORT_ASC     SORT_DESC
+ * @return array 排序后的数组
+ */
+function arraySort($array, $keys, $sort = SORT_DESC) {
+    $keysValue = [];
+    foreach ($array as $k => $v) {
+        $keysValue[$k] = $v[$keys];
+    }
+    array_multisort($keysValue, $sort, $array);
+    return $array;
+}
+
+
+//  返回成功数据
+function responseSuccess($data = [],$status = 1001,$msg = '成功')
+{
+    $result = [
+        'status' => $status,
+        'msg' => $msg,
+        'data' => $data
+    ];
+    return(json($result));
+}
+
+//  返回错误数据
+function responseError($data= [], $status = 2001,$msg = '错误')
+{
+    $result = [
+        'status' => $status,
+        'msg' => $msg,
+        'data' => $data
+    ];
+    return(json($result));
+}
+
+
+function FromXml($xml)
+{
+    if (!$xml) {
+        echo "xml数据异常！";
+    }
+    //将XML转为array
+    //禁止引用外部xml实体
+    libxml_disable_entity_loader(true);
+    $data = json_decode(json_encode(simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA)), true);
+    return $data;
 }

@@ -55,11 +55,13 @@ class WechatPay extends Controller
             'openid' => $openid//交易类型
         );
         $sign = $this->getSign($data);//签名
+
         $data['sign'] = $sign;
         $xmldata = $this->ToXml($data);//数组转化为xml
         $url = 'https://api.mch.weixin.qq.com/pay/unifiedorder';
         $res = $this->http_request($url, $xmldata);
         $result = $this->FromXml($res);
+
         //判断返回结果
         if ($result['return_code'] == 'SUCCESS') {
             if ($result['result_code'] == 'SUCCESS') {
@@ -78,7 +80,7 @@ class WechatPay extends Controller
                 if ($result['err_code'] == 'ORDERPAID') {
                     $order_type = 2;
                     //修改订单状态
-                    Db::table('ml_tbl_order')->where('order_id', $order_id)->update(['order_type' => $order_type, 'pay_time' => date("Y-m-d h:i:s", time())]);
+                    Db::table('ml_tbl_order')->where('order_id', $order_id)->update(['order_type' => $order_type, 'pay_time' => date("Y-m-d H:i:s", time())]);
                     //判断否是第三方系统下单
 
                     $data = array('status' => 1, 'msg' => '订单已支付', 'data' => '');
@@ -91,7 +93,6 @@ class WechatPay extends Controller
         }
         return json($data);
     }
-
 
     public function xmWechatPay(Request $request)
     {
@@ -144,7 +145,7 @@ class WechatPay extends Controller
                 if ($result['err_code'] == 'ORDERPAID') {
                     $order_type = 2;
                     //修改订单状态
-                    Db::table('ml_tbl_order')->where('order_id', $order_id)->update(['order_type' => $order_type, 'pay_time' => date("Y-m-d h:i:s", time())]);
+                    Db::table('ml_tbl_order')->where('order_id', $order_id)->update(['order_type' => $order_type, 'pay_time' => date("Y-m-d H:i:s", time())]);
                     //判断否是第三方系统下单
 
                     $data = array('status' => 1, 'msg' => '订单已支付', 'data' => '');
@@ -158,10 +159,6 @@ class WechatPay extends Controller
         return json($data);
     }
 
-    //TODO
-    public function payNotify()
-    {
-    }
 
     public function orderQuery()
     {
@@ -170,6 +167,7 @@ class WechatPay extends Controller
             $goods_type = $_REQUEST['order_type'];
         }else{
             $goods_type = 2;
+//            return json(['status'=>0,'msg'=>'参数错误','data'=>'']);
         }
         $order_info = Db::table('ml_xm_order_summary')->where('order_id', $order_id)->find();
         $type = $order_info['type'];
@@ -192,7 +190,7 @@ class WechatPay extends Controller
         $result = $this->FromXml($res);
         //判断返回结果
         if ($result['return_code'] == 'SUCCESS') {
-            if (isset($result['trade_state']) == 'SUCCESS') {
+            if ( isset($result['trade_state']) == 'SUCCESS') {
                 if ($type == 1) {
                     if (isset($_REQUEST['procardnum']) && !empty($_REQUEST['procardnum'])){
                         $goods_num = $_REQUEST['procardnum'];
@@ -235,7 +233,7 @@ class WechatPay extends Controller
                         $order_type = 2;
                     }
                     //修改订单状态
-                    Db::table('ml_tbl_order')->where('order_id', $order_id)->update(['order_type' => $order_type, 'pay_time' => date("Y-m-d h:i:s", time())]);
+                    Db::table('ml_tbl_order')->where('order_id', $order_id)->update(['order_type' => $order_type, 'pay_time' => date("Y-m-d H:i:s", time())]);
                     $order_data = Db::table('ml_tbl_order')->where('order_id', $order_id)->find();
                     $order_zid = $order_data['id'];
                     //修改商品库存及商品售出
@@ -267,12 +265,42 @@ class WechatPay extends Controller
                                 //成功后修改订单状态
                                 Db::table('ml_tbl_order_details')->where('id', $order_details_id)->update(['third_isconfirm' => $third_isconfirm]);
                                 Db::table('ml_tbl_order')->where('order_id', $order_id)->update(['order_state'=>$creatMenPiaoOrder]);
+
                             } else {
-                                Db::table('ml_tbl_order')->where('order_id', $order_id)->update(['order_state' => $creatMenPiaoOrder]);
+                                Db::table('ml_tbl_order')->where('order_id', $order_id)->update(['order_state'=>$creatMenPiaoOrder]);
                             }
                         }
                     }
-                    $data = array('status' => 0, 'msg' => '成功', 'data' => '');
+
+
+                    // 修改优惠券状态
+                    Db::name('xm_tbl_coupon')->where('id',$order_data['coupon_id'])->update(['use_status'=>2]);
+                    /*
+                    if ($order_data['coupon_id']){
+                        //  1不可以10元618优惠券
+                        $data = array('status' => 0, 'msg' => '成功', 'data' => 1);
+                    }else{
+                        //  是否拒绝过
+                        $status = Db::name('ml_tbl_coupon_tmp')->where('uid',$order_data['user_id'])->find();
+                        $cpn = Db::name('xm_tbl_coupon')->where('user_id',$order_data['user_id'])->select();
+
+                        if (isset($status['uid']) && !empty($status['uid'])){
+                            $data = array('status' => 0, 'msg' => '成功', 'data' => 1);
+                        }else{
+                            foreach ($cpn as $k=>$v){
+                                if (($v['coup_type'] == 1) && ($v['par_value'] == 10)){
+                                    //  1不可以10元618优惠券
+                                    $data = array('status' => 0, 'msg' => '成功', 'data' => 1);
+
+                                }else{
+
+                                    //  2可以领
+                                    $data = array('status' => 0, 'msg' => '成功', 'data' => 2);
+                                }
+                            }
+                        }
+                    }
+                    */
                 }
             } else {
                 $data = array('status' => 1, 'msg' => '订单未支付', 'data' => '');
@@ -355,45 +383,300 @@ class WechatPay extends Controller
         return $xml;
     }
 
-
-    /**
-     * @param Request $request
-     * @time: 2019/5/21
-     * @autor: duheyuan
-     * 提现--
-     */
-    //TODO  提现,未完成,等待平台申请
-    public function doWithdraw(Request $request)
+    public function payNotify()
     {
-//        if ($request->isPost()){
-        $all = $request->param();
-        if (isset($all['order_no']) && !empty($all['order_no'])){
-            $order_info = Db::name('ml_tbl_withdraw')->where('order_no',$all['order_no'])->find();
-            $openid = Db::name('ml_tbl_user')->where('id',$order_info['uid'])->value('wechat_open_id');
-            $data = array(
-                'mch_appid' => PublicEnum::WX_APPID ,//小程序appid
-                'mchid' => '1501953711',//商户号
-                'nonce_str' => $this->nonce_str(),//随机字符串
-//                    'notify_url' => 'https://tuitui.tango007.com/sjht/public/payNotify',//通知地址
-                'partner_trade_no' => $all['order_no'],//商户订单号
-                'spbill_create_ip' => '192.168.0.2',//终端IP
-                'amount' => $order_info['amount'] * 100,//标价金额
-                'openid' => $openid,
-                'check_name' => 'NO_CHECK',//校验用户姓名选项
-                'desc' => '用户提现',
+        $order_id = $_REQUEST['orderid'];
+        $type = $_REQUEST['ordertype'];
 
-            );
+        if ($type == 1) {
+            $appid = 'wx4473d33d20a8d3b3';
+        } elseif ($type == 2) {
+            $appid = 'wx0fda8074ccdb716d';
+        }
+        $order_info = Db::name('ml_tbl_distributor')->where('id', $order_id)->find();
+        if (empty($order_info)) {
+            return json(['status' => 2001, 'msg' => '订单不存在', 'data' => '']);
+        }
+        $data = array(
+            'appid' => $appid,//小程序appid
+            'mch_id' => '1501953711',//商户号
+            'out_trade_no' => $order_info['order_num'],//商户订单号
+            'nonce_str' => $this->nonce_str(),//随机字符串
+        );
+        $sign = $this->getSign($data);//签名
+        $data['sign'] = $sign;
+        $xmldata = $this->ToXml($data);//数组转化为xml
+        $url = 'https://api.mch.weixin.qq.com/pay/orderquery';
+        $res = $this->http_request($url, $xmldata);
+        $result = $this->FromXml($res);
+        if ($result['return_code'] == 'SUCCESS') {
+            if (isset($result['trade_state']) == 'SUCCESS') {
+                $user_info = Db::name('ml_tbl_user')->where('id',$order_info['u_id'])->find();
+                $time = date('Y-m-d' ,strtotime('+365 day',time()));
+                $arr = ['is_salesman'=>1,'salesman_due'=>$time];
+                $info = Db::name('ml_tbl_user')->where('id',$order_info['u_id'])->update($arr);
+                Db::name('ml_tbl_distributor')->where('id',$order_id)->update(['pay_time'=>time(),'order_type'=>2]);
+                $xm_status = Db::name('ml_xm_binding')->where('ml_user_id',$order_info['u_id'])->find();
+                if ($xm_status){
+                    $xm_type = 1;
+                }else{
+                    $xm_type = 0;
+                }
 
-            $sign = $this->getSign($data);//签名
-            $data['sign'] = $sign;
-            $xmldata = $this->ToXml($data);//数组转化为xml
-            $url = 'https://api.mch.weixin.qq.com/mmpaymkttransfers/promotion/transfers';
-            $res = $this->http_send_query($url, $xmldata);
-            $result = $this->FromXml($res);
-            dump($result);die;
+                if ($info){
+                    $data = ['status'=>1,'msg'=>'成功','data'=>$xm_type];
+                }else{
+                    $data = ['status'=>0,'msg'=>'用户信息修改失败','data'=>''];
+
+                }
+
+            } else {
+                $data = array('status' => 1, 'msg' => '订单未支付', 'data' => '');
+            }
+        }else{
+            $data = array('status' => 1, 'msg' => $result['err_code_des'], 'data' => '');
+        }
+        return json($data);
+    }
+
+    public function renewalFeeOrder()
+    {
+        //订单号
+        $order_id = $_REQUEST['orderid'];
+        //订单类别（1.推推项目 2.推推优选商城）
+        $order_type = $_REQUEST['ordertype'];
+        //随机字符串32位
+        if ($order_type == 1) {
+            //查询订单价格
+            $selectorderprice = Db::table('xm_tbl_order')->where('order_id', $order_id)->find();
+            $order_price = $selectorderprice['order_price'] * 100;
+            $appid = 'wx4473d33d20a8d3b3';
+            $body = '推推项目';
+            //查询用户openid
+            $selectopenid = Db::table('xm_tbl_user')->where('id', $selectorderprice['u_id'])->find();
+            $openid = $selectopenid['wechat_open_id'];
+        } elseif ($order_type == 2) {
+            $selectorderprice = Db::table('ml_tbl_distributor')->where('id', $order_id)->find();
+            $order_price = $selectorderprice['price'] * 100;
+            $appid = 'wx0fda8074ccdb716d';
+            $body = '推推优享商城';
+            //查询用户openid
+            $selectopenid = Db::table('ml_tbl_user')->where('id', $selectorderprice['u_id'])->find();
+            $openid = $selectopenid['wechat_open_id'];
+        }
+        $data = array(
+            'appid' => $appid,//小程序appid
+            'body' => $body,  //商品描述
+            'mch_id' => '1501953711',//商户号
+            'nonce_str' => $this->nonce_str(),//随机字符串
+            'notify_url' => 'https://tuitui.tango007.com/sjht/public/payNotify',//通知地址
+            'out_trade_no' => $selectorderprice['order_num'],//商户订单号
+            'spbill_create_ip' => '192.168.0.2',//终端IP
+            'total_fee' => $order_price,//标价金额
+            'trade_type' => 'JSAPI',//交易类型
+            'openid' => $openid//交易类型
+        );
+        $sign = $this->getSign($data);//签名
+        $data['sign'] = $sign;
+        $xmldata = $this->ToXml($data);//数组转化为xml
+        $url = 'https://api.mch.weixin.qq.com/pay/unifiedorder';
+        $res = $this->http_request($url, $xmldata);
+        $result = $this->FromXml($res);
+        //判断返回结果
+        if ($result['return_code'] == 'SUCCESS') {
+            if ($result['result_code'] == 'SUCCESS') {
+                $time = time();
+                $info = array(
+                    'appId' => $appid,
+                    'timeStamp' => "" . $time . "",
+                    'nonceStr' => $this->nonce_str(),
+                    'package' => 'prepay_id=' . $result['prepay_id'],
+                    'signType' => 'MD5',
+                );
+                $paySign = $this->getSign($info);
+                $info['paySign'] = $paySign;
+                $data = array('status' => 0, 'msg' => '成功', 'data' => $info);
+            } elseif ($result['result_code'] == 'FAIL') {
+                if ($result['err_code'] == 'ORDERPAID') {
+                    $order_type = 2;
+                    //修改订单状态
+                    Db::table('ml_tbl_distributor')->where('id', $order_id)->update(['order_type' => $order_type, 'pay_time' =>  time()]);
+                    //判断否是第三方系统下单
+                    $data = array('status' => 1, 'msg' => '订单已支付', 'data' => '');
+                } else {
+                    $data = array('status' => 1, 'msg' => $result['err_code_des'], 'data' => '');
+                }
+            }
+        } else {
+            $data = array('status' => 1, 'msg' => $result['return_msg'], 'data' => '');
+        }
+        return json($data);
+    }
+
+    //  活动支付接口
+    public function eventPay()
+    {
+        $all = $this->request->param();
+        if (isset($all['order_id']) && !empty($all['order_id'])){
+            $order_id = $all['order_id'];
+        }else{
+            return  json(['status'=>2001,'msg'=>'参数错误','data'=>'']);
         }
 
-//        }
+        $selectorderprice = Db::name('ml_tbl_event_order')->where('id',$order_id)->find();
+        $order_price = $selectorderprice['pay_price'] * 100;
+        $appid = PublicEnum::WX_APPID;
+        $body = '推推优享商城';
+        //查询用户openid
+        $selectopenid = Db::table('ml_tbl_user')->where('id', $selectorderprice['user_id'])->find();
+        $openid = $selectopenid['wechat_open_id'];
+
+
+        $data = array(
+            'appid' => $appid,//小程序appid
+            'body' => $body,  //商品描述
+            'mch_id' => '1501953711',//商户号
+            'nonce_str' => $this->nonce_str(),//随机字符串
+            'notify_url' => 'https://tuitui.tango007.com/sjht/public/payNotify',//通知地址
+            'out_trade_no' => $selectorderprice['order_id'],//商户订单号
+            'spbill_create_ip' => '192.168.0.2',//终端IP
+            'total_fee' => $order_price,//标价金额
+            'trade_type' => 'JSAPI',//交易类型
+            'openid' => $openid//交易类型
+        );
+        $sign = $this->getSign($data);//签名
+        $data['sign'] = $sign;
+        $xmldata = $this->ToXml($data);//数组转化为xml
+        $url = 'https://api.mch.weixin.qq.com/pay/unifiedorder';
+        $res = $this->http_request($url, $xmldata);
+        $result = $this->FromXml($res);
+        //判断返回结果
+        if ($result['return_code'] == 'SUCCESS') {
+            if ($result['result_code'] == 'SUCCESS') {
+                $time = time();
+                $info = array(
+                    'appId' => $appid,
+                    'timeStamp' => "" . $time . "",
+                    'nonceStr' => $this->nonce_str(),
+                    'package' => 'prepay_id=' . $result['prepay_id'],
+                    'signType' => 'MD5',
+                );
+                $paySign = $this->getSign($info);
+                $info['paySign'] = $paySign;
+                $data = array('status' => 0, 'msg' => '成功', 'data' => $info);
+            } elseif ($result['result_code'] == 'FAIL') {
+                if ($result['err_code'] == 'ORDERPAID') {
+                    $order_type = 2;
+                    //修改订单状态
+                    Db::table('ml_tbl_event_order')->where('id', $order_id)->update(['order_type' => $order_type, 'pay_time' =>  date('Y-m-d H:i:s',time())]);
+                    //判断否是第三方系统下单
+                    $data = array('status' => 1, 'msg' => '订单已支付', 'data' => '');
+                } else {
+                    $data = array('status' => 1, 'msg' => $result['err_code_des'], 'data' => '');
+                }
+            }
+        } else {
+            $data = array('status' => 1, 'msg' => $result['return_msg'], 'data' => '');
+        }
+        return json($data);
+    }
+
+    //  活动支付回调
+    public function eventNotify()
+    {
+        $order_id = $_REQUEST['order_id'];
+        $appid = PublicEnum::WX_APPID;
+
+        $order_info = Db::name('ml_tbl_event_order')->where('id', $order_id)->find();
+        if (empty($order_info)) {
+            return json(['status' => 2001, 'msg' => '订单不存在', 'data' => '']);
+        }
+
+        $data = array(
+            'appid' => $appid,//小程序appid
+            'mch_id' => '1501953711',//商户号
+            'out_trade_no' => $order_info['order_id'],//商户订单号
+            'nonce_str' => $this->nonce_str(),//随机字符串
+        );
+        $sign = $this->getSign($data);//签名
+        $data['sign'] = $sign;
+        $xmldata = $this->ToXml($data);//数组转化为xml
+        $url = 'https://api.mch.weixin.qq.com/pay/orderquery';
+        $res = $this->http_request($url, $xmldata);
+        $result = $this->FromXml($res);
+        if ($result['return_code'] == 'SUCCESS') {
+            if (isset($result['trade_state']) == 'SUCCESS') {
+                //  修改订单状态
+                $goods_info = Db::name('ml_tbl_event_goods')->where('id',$order_info['goods_id'])->find();
+                $goods_info['goods_stock'] -=  $order_info['goods_num'];
+                //  查询时是否是团长
+                $user_info = Db::name('ml_tbl_event_member')->where('user_id',$order_info['user_id'])->find();
+                $user_info['but_num'] += $order_info['pay_price'];
+                Db::name('ml_tbl_event_goods')->where('id',$order_info['goods_id'])->update(['goods_stock'=>$goods_info['goods_stock']]);
+
+                Db::startTrans();
+                if ($user_info['pid'] != 0){
+                    $lead_info = Db::name('ml_tbl_event_member')->where('id',$user_info['pid'])->find();
+                    $wallet_status = Db::name('ml_tbl_wallet')->where('user_id',$lead_info['user_id'])->find();
+
+                    //  计算返佣钱
+                    $distrimoney = $order_info['goods_num'] * $goods_info['goods_bonus'];
+                    //  钱包存在
+                    if ($wallet_status){
+                        // 加上钱包的钱写入钱包详情
+                        $now_money = $wallet_status['balance'] + $distrimoney;
+                        Db::name('ml_tbl_wallet')->where('user_id',$user_info['user_id'])->update(['balance'=>$now_money]);
+                        $edit_wallet = Db::name('ml_tbl_wallet_details')->insert(['wallet_id'=>$wallet_status['id'],'time'=>date('Y-m-d H:i:s',time()),'amount'=>$distrimoney,'nowbalance'=>$now_money,'type'=>1,'remarks'=>'个人返佣','order_num'=>$order_info['order_id']]);
+                        if (!$edit_wallet){
+                            Db::rollback();
+                            return json(['status'=>3001,'msg'=>'返佣出错','data'=>'']);
+                        }
+                    }else{
+                        $lead_wallet_id = Db::name('ml_tbl_wallet')->insertGetId(['user_id'=>$lead_info['user_id'],'balance'=>$distrimoney,'creat_time'=>date('Y-m-d H:i:s',time())]);
+                        $edit_wallet = Db::name('ml_tbl_wallet_details')->insert(['wallet_id'=>$lead_wallet_id,'time'=>date('Y-m-d H:i:s',time()),'amount'=>$distrimoney,'nowbalance'=>$distrimoney,'type'=>1,'remarks'=>'个人返佣','order_num'=>$order_info['order_id']]);
+                        if (!$edit_wallet){
+                            Db::rollback();
+                            return json(['status'=>3001,'msg'=>'返佣出错','data'=>'']);
+                        }
+                    }
+                }else{
+                    //  查询钱包状态
+                    $wallet_status = Db::name('ml_tbl_wallet')->where('user_id',$order_info['user_id'])->find();
+                    //  返佣金额
+                    $distrimoney = $order_info['goods_num'] * $goods_info['goods_bonus'];
+                    //  钱包存在
+                    if ($wallet_status){
+                        $now_money = $wallet_status['balance'] + $distrimoney;
+                        Db::name('ml_tbl_wallet')->where('user_id',$order_info['user_id'])->update(['balance'=>$now_money]);
+                        $edit_wallet = Db::name('ml_tbl_wallet_details')->insert(['wallet_id'=>$wallet_status['id'],'time'=>date('Y-m-d H:i:s',time()),'amount'=>$distrimoney,'nowbalance'=>$now_money,'type'=>1,'remarks'=>'个人返佣','order_num'=>$order_info['order_id']]);
+                        if (!$edit_wallet){
+                            Db::rollback();
+                            return json(['status'=>3001,'msg'=>'返佣出错','data'=>'']);
+                        }
+                    }else{
+                        $lead_wallet_id = Db::name('ml_tbl_wallet')->insertGetId(['user_id'=>$order_info['user_id'],'balance'=>$distrimoney,'creat_time'=>date('Y-m-d H:i:s',time())]);
+                        $edit_wallet = Db::name('ml_tbl_wallet_details')->insert(['wallet_id'=>$lead_wallet_id,'time'=>date('Y-m-d H:i:s',time()),'amount'=>$distrimoney,'nowbalance'=>$distrimoney,'type'=>1,'remarks'=>'个人返佣','order_num'=>$order_info['order_id']]);
+                        if (!$edit_wallet){
+                            Db::rollback();
+                            return json(['status'=>3001,'msg'=>'返佣出错','data'=>'']);
+                        }
+                    }
+                }
+                $order_status = Db::name('ml_tbl_event_order')->where('id',$order_id)->update(['order_type'=>2,'pay_time'=>date('Y-m-d H:i:s')]);
+                if (!$order_status){
+                    Db::rollback();
+                    return json(['status'=>3001,'msg'=>'订单出错,请联系客服','data'=>'']);
+                }
+                Db::commit();
+                $data = ['status'=>1,'msg'=>'成功','data'=>''];
+            } else {
+                $data = array('status' => 1, 'msg' => '订单未支付', 'data' => '');
+            }
+        }else{
+            $data = array('status' => 1, 'msg' => $result['err_code_des'], 'data' => '');
+        }
+
+        return json($data);
 
     }
 

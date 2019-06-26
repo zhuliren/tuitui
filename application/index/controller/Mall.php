@@ -88,6 +88,13 @@ class Mall
     public function goodsDetails()
     {
         $goods_id = $_REQUEST['goodsid'];
+        if (isset($_REQUEST['form_id']) && !empty($_REQUEST['form_id'])){
+            if (!isset($_REQUEST['user_id']) || empty($_REQUEST['user_id'])){
+                return responseError();
+            }
+            Db::name('ml_tbl_user')->where('id',$_REQUEST['user_id'])->update(['form_id'=>$_REQUEST['form_id']]);
+        }
+
         $selectgoods = Db::table('ml_tbl_goods')->where('id', $goods_id)->find();
         $selectgoodsbanner = Db::table('ml_tbl_goods_banner')->where('goods_id', $goods_id)->column('img_url');
         if ($selectgoods['business_id']){
@@ -218,7 +225,7 @@ class Mall
                         'as_name'=>$v['as_name'],
                         'goodslist'=> Db::name('ml_tbl_goods_two')
                                         ->where(['goods_class'=>$v['id'],'is_online'=>1])
-                                        ->order('goods_sort','desc')
+                                        ->order(['goods_sort'=>'desc','gid'=>'desc'])
                                         ->field('id as gid,head_img,goods_name,bonus_interval,price_interval,ex_time,goods_original_price')
                                         ->limit(4)
                                         ->select(),

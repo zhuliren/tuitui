@@ -31,4 +31,22 @@ class PublicEnum
     const TICKET_ID = 'shihuituan';
     const TICKET_SECRET = 'shihuituan123';
 
+    const ALL = 1;
+    const TRAVEL = 4;
+    const CHILDREN = 5;
+    const HOUSEKEEPING = 7;
+    const FRUIT = 8;
+    const FOOD = 9;
+    const OTHER = 10;
+
+
+    const ORDER_PAY = 'FTWQioPcN2CR5McOXgXsKqR-A0JRdV_ZZwLH-AZv_8o';
+    const ORDER_NOPAY = 'xkYXbN8lYHVNZMKSKKl9Y0AmjlYhes9X2izDNHNS_TM';
+
+    /* ----  ----  ---- 不一定使用,记住类型 ----  ---- ----  ----- */
+    const Success = 1001;       //  成功
+    const PARAM_ERROR = 2001;   // 传递的参数错误
+    const DB_ERROR = 3001;      //  数据库增入错误
+    const SELECT_ERROR = 4001;  //  数据库查询错误
+    const WARNING_ERROR = 5001; // 非法操作类错误
 }
