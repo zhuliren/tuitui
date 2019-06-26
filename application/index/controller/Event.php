@@ -269,9 +269,11 @@ class Event extends Controller
         if (!$user_info){
             return json(['status'=>5001,'msg'=>'用户不存在','data'=>'']);
         }
-//        if ($user_info['pid'] != $user_info['id']){
-        Db::name('ml_tbl_event_member')->where('user_id',$all['user_id'])->update(['pid'=>$all['lead_id']]);
-//        }
+        if ($user_info['id'] != $all['lead_id']){
+            Db::name('ml_tbl_event_member')->where('user_id',$all['user_id'])->update(['pid'=>$all['lead_id']]);
+        }else{
+            Db::name('ml_tbl_event_member')->where('user_id',$all['user_id'])->update(['pid'=>0]);
+        }
 
         //  商品信息
         $goods_info = Db::name('ml_tbl_event_goods')->where(['id'=>$all['goods_id'],'is_online'=>1])->find();

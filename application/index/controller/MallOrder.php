@@ -313,11 +313,18 @@ class MallOrder extends Controller
         $user_name = filter_Emoji($_REQUEST['username']);
         $sizeid = $this->request->param('sizeid');
 
-        if ($goods_id == 695){
-            $sql = "SELECT * FROM ml_tbl_order AS o JOIN ml_tbl_order_details AS d ON o.id=d.order_zid WHERE o.user_id = {$user_id} AND d.goods_id = {$goods_id} ";
+        if ($goods_id == 700){
+            $sql = "SELECT o.id,o.order_type,d.goods_num,o.user_id FROM ml_tbl_order AS o JOIN ml_tbl_order_details AS d ON o.id=d.order_zid WHERE o.user_id = {$user_id} AND d.goods_id = {$goods_id}  ";
             $limit_user_buy = Db::query($sql);
+
             if ($limit_user_buy){
-                return responseError([],4001,'该商品只可购买一次或有订单未完成');
+                $num = 0;
+                foreach ($limit_user_buy as $k=>$v){
+                    $num += $v['goods_num'];
+                }
+                if ( ($num+$goods_num) > 4 ){
+                    return responseError([],4001,'该商品最多购买四张');
+                }
             }
         }
 
