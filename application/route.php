@@ -127,8 +127,10 @@ Route::rule('namePreg', 'index/MallUser/namePreg');
 Route::rule('getMyCoupon', 'index/UserCoupon/getMyCoupon');//获取我的优惠券
 
 
-Route::rule('getTicketGoods', 'index/Ticket123/getSingleGoods');//获取我的优惠券
-Route::rule('tGoodsList', 'index/Ticket123/getMenPiaoGoodslist');//获取我的优惠券
+Route::rule('getTicketGoods', 'index/Ticket123/getSingleGoods');//
+Route::rule('tGoodsList', 'index/Ticket123/getMenPiaoGoodslist');//
+Route::rule('viewPointInfo', 'index/Ticket123/getViewPointInfo');//
+Route::rule('takeGoods', 'index/Ticket123/getGoodsInfo');//
 
 
 //TODO 新商城首页接口  20190515
@@ -168,6 +170,9 @@ Route::rule('goodsOnline', 'admin/Goods/goodsOnline');   //  商品上下架
 
 Route::rule('editUserSales', 'index/MallUser/editUserSales');   //
 Route::rule('renewalDisTri', 'index/MallOrder/renewalDisTri');   //
+Route::rule('v1/clerkrcode', 'index/MallOrder/UnionPayOpenAPI');   // 银联API
+Route::rule('v1/binddevice', 'index/MallOrder/bindDevice');   //
+Route::rule('v1/agenbinddevice', 'index/MallOrder/againBindDevice');   //
 
 
 

@@ -407,3 +407,17 @@ CREATE TABLE `ml_tbl_event_push_king` (
   `event_id` int(11) NOT NULL DEFAULT 1 COMMENT '活动届数',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+
+ALTER TABLE ml_tbl_business ADD COLUMN `device_num` char(100) NOT NULL DEFAULT 0 COMMENT '设备号';
+
+
+
+
+CREATE TABLE `ml_tbl_open_interface` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `client_id` int(11) DEFAULT NULL COMMENT '用户名',
+  `secret` varchar(30) DEFAULT NULL COMMENT '密码',
+  `ctime` int(10) default 0 COMMENT '创建时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;

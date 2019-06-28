@@ -313,8 +313,8 @@ class MallOrder extends Controller
         $user_name = filter_Emoji($_REQUEST['username']);
         $sizeid = $this->request->param('sizeid');
 
-        if ($goods_id == 700){
-            $sql = "SELECT o.id,o.order_type,d.goods_num,o.user_id FROM ml_tbl_order AS o JOIN ml_tbl_order_details AS d ON o.id=d.order_zid WHERE o.user_id = {$user_id} AND d.goods_id = {$goods_id}  ";
+        if ($goods_id == 80){
+            $sql = "SELECT o.id,o.order_type,d.goods_num,o.user_id FROM ml_tbl_order AS o JOIN ml_tbl_order_details AS d ON o.id=d.order_zid WHERE o.user_id = {$user_id} AND d.goods_id = {$goods_id}  AND o.order_type != 4 ";
             $limit_user_buy = Db::query($sql);
 
             if ($limit_user_buy){
@@ -666,5 +666,221 @@ class MallOrder extends Controller
         }else{
             return json(['status'=>2001,'msg'=>'新增失败','data'=>'']);
         }
+    }
+
+
+    //  对外银联接口
+    public function UnionPayOpenAPI()
+    {
+        $all = $this->request->param();
+        //  参数是否在
+        if (!isset($all['clerkstr']) || empty($all['clerkstr'])){
+            return responseError([],400,'缺少必要参数');
+        }
+        if (!isset($all['time']) || empty($all['time'])){
+            return responseError([],400,'缺少时间戳');
+        }
+        if (!isset($all['device_num']) || empty($all['device_num'])){
+            return responseError([],400,'缺少设备号');
+        }
+
+        if ( strlen($all['sign']) != 32){
+            return responseError([],500,'签名错误');
+        }
+
+//        $timsatmp =  strtotime($all['time']);
+//        if ( ( $timsatmp > (time() + 10))  || ( $timsatmp < (time()-10) )){
+//            return  responseError([],402,'时间允许值在10s范围内');
+//        }
+        //  查看订单是否在
+        $order_status = Db::name('ml_tbl_order')->where('order_id',$all['clerkstr'])->find();
+        if (!$order_status){
+            return responseError([],404,'订单不存在');
+        }
+        if ($order_status['order_type'] == 3){
+            return responseError([],402,'订单已完成');
+        }
+
+        //  签名生成参数
+        $timestring = str_replace('%20', ' ', $all['time']);
+        $arr = [
+            'device_num'=>$all['device_num'],
+            'timestamp'=>$timestring,
+            'clerkstr'=>$all['clerkstr'],
+        ];
+        //  验证签名            TODO: 传输过来为小写,编译对比为大写对比
+        $sign = $this->Sign($arr,$all['device_num']);
+        if ($sign !==  strtoupper($all['sign'])){
+            return responseError([],401,'签名错误');
+        }
+
+        //  通过订单查询设备号是否存在
+        $sql  = "SELECT b.id,b.device_num,d.goods_num,d.verify_num FROM `ml_tbl_order_details` AS d LEFT JOIN `ml_tbl_goods_two` AS g ON d.goods_id=g.id LEFT JOIN `ml_tbl_business` AS b ON g.business_id = b.id  WHERE d.order_zid = {$order_status['id']} ";
+        $res = Db::query($sql);
+
+        if ($res){
+            if (empty($res[0])){
+                return responseError([],404,'未找到详情信息');
+            }
+            if ($all['device_num'] != $res[0]['device_num']  ){
+                return responseError([],403,'不是允许的设备');
+            }
+
+        }else{
+            return responseError([],404,'商户不存在');
+        }
+        /* 通过设备号查询
+        $device_status = Db::name('ml_tbl_business')->where('device_num',$all['device_num'])->find();
+        if (!$device_status){
+            return responseError([],400,'不是允许的设备');
+        }
+        */
+        //  TODO:进行订单操作  暂时写死核销所有券码
+
+        if (isset($all['clerk_num']) && !empty($all['clerk_num'])){
+            $clerk_num = $all['clerk_num'];
+        }else{
+            $clerk_num = $res[0]['goods_num'];
+        }
+        //  验证 购买数量-核销数量 是否 小于 核销数量  如果小于错误
+        if (($res[0]['goods_num'] - $res[0]['verify_num'] ) < $clerk_num ){
+            return responseError([],500,'核销数量错误');
+        }else{
+            $now_clerk_num = $clerk_num + $res[0]['verify_num'];
+        }
+        //  修改订单状态
+        Db::startTrans();
+        //  核销数量等于购买数量完成订单
+        if ($now_clerk_num == $res[0]['goods_num']){
+            $edit_order = Db::name('ml_tbl_order')->where('order_id',$all['clerkstr'])->update(['order_type'=>3]);
+            if (!$edit_order){
+                Db::rollback();
+                return responseError([],500,'核销失败');
+            }
+            $edit_details = Db::name('ml_tbl_order_details')->where('order_zid',$order_status['id'])->update(['verify_num'=>$now_clerk_num]);
+            if (!$edit_details){
+                Db::rollback();
+                return responseError([],500,'核销失败');
+            }
+        }else{
+            //  核销数量小于购买数量还可以核销
+            $edit_order = Db::name('ml_tbl_order')->where('order_id',$all['clerkstr'])->update(['order_type'=>2]);
+            if (!$edit_order){
+                Db::rollback();
+                return responseError([],500,'核销失败');
+            }
+            $edit_details = Db::name('ml_tbl_order_details')->where('order_zid',$order_status['id'])->update(['verify_num'=>$now_clerk_num]);
+            if (!$edit_details){
+                Db::rollback();
+                return responseError([],500,'核销失败');
+            }
+        }
+        Db::commit();
+
+
+        $returnData = [
+            '核销分数'=>$now_clerk_num,
+            '购买分数'=>$res[0]['goods_num']
+        ];
+        return responseSuccess($returnData,200,'成功');
+    }
+
+
+
+    public function bindDevice()
+    {
+        $all = $this->request->param();
+        //  参数是否在
+        if (!isset($all['clerkstr']) || empty($all['clerkstr'])){
+            return responseError([],400,'缺少必要参数');
+        }
+        if (!isset($all['time']) || empty($all['time'])){
+            return responseError([],400,'缺少时间戳');
+        }
+        if (!isset($all['device_num']) || empty($all['device_num'])){
+            return responseError([],400,'缺少设备号');
+        }
+        if ( strlen($all['sign']) != 32){
+            return responseError([],500,'签名长度错误');
+        }
+
+        //  签名生成参数
+        $timestring = str_replace('%20', ' ', $all['time']);
+        $arr = [
+            'device_num'=>$all['device_num'],
+            'time'=>$timestring,
+            'clerkstr'=>$all['clerkstr'],
+        ];
+        //  验证签名            TODO: 传输过来为小写,编译对比为大写对比
+        $sign = $this->Sign($arr,$all['device_num']);
+        if ($sign !==  strtoupper($all['sign'])){
+            return responseError([],401,'签名错误');
+        }
+
+        //  查看店铺是否存在
+        $business_status = Db::name('ml_tbl_business')->where('id',$all['clerkstr'])->find();
+        if (!$business_status){
+            return responseError([],404,'商户不存在');
+        }
+        if (!empty($business_status['device_num']) ){
+            return responseError([],402,'该设备已被绑定,是否重新绑定');
+        }
+        //  修改商户设备号
+        Db::startTrans();
+        $result = Db::name('ml_tbl_business')->where('id',$all['clerkstr'])->update(['device_num'=>$all['device_num']]);
+        if ($result){
+            Db::commit();
+            return responseSuccess([],200,'绑定成功!');
+        }else{
+            Db::rollback();
+            return responseError([],500, '绑定失败');
+        }
+    }
+
+    public function againBindDevice()
+    {
+        $all = $this->request->param();
+        //  参数是否在
+        if (!isset($all['clerkstr']) || empty($all['clerkstr'])){
+            return responseError([],400,'缺少必要参数');
+        }
+        if (!isset($all['time']) || empty($all['time'])){
+            return responseError([],400,'缺少时间戳');
+        }
+        if (!isset($all['device_num']) || empty($all['device_num'])){
+            return responseError([],400,'缺少设备号');
+        }
+        if ( strlen($all['sign']) != 32){
+            return responseError([],500,'签名长度错误');
+        }
+
+        //  签名生成参数
+        $timestring = str_replace('%20', ' ', $all['time']);
+        $arr = [
+            'device_num'=>$all['device_num'],
+            'time'=>$timestring,
+            'clerkstr'=>$all['clerkstr'],
+        ];
+        //  验证签名            TODO: 传输过来为小写,编译对比为大写对比
+        $sign = $this->Sign($arr,$all['device_num']);
+        if ($sign !==  strtoupper($all['sign'])){
+            return responseError([],401,'签名错误');
+        }
+
+        //  查看店铺是否存在
+        $business_status = Db::name('ml_tbl_business')->where('id',$all['clerkstr'])->find();
+        if (!$business_status){
+            return responseError([],404,'商户不存在');
+        }
+        if (empty($business_status['device_num']) ){
+            return responseError([],402,'该设备还未被绑定过!');
+        }
+
+        //  修改商户设备号
+        $status = Db::name('ml_tbl_business')->where('id',$all['clerkstr'])->update(['device_num'=>$all['device_num']]);
+        if (!$status){
+            return responseError([],500,'绑定失败');
+        }
+        return responseSuccess([],200,'绑定成功!');
     }
 }

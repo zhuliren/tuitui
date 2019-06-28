@@ -31,6 +31,10 @@ class PublicEnum
     const TICKET_ID = 'shihuituan';
     const TICKET_SECRET = 'shihuituan123';
 
+    const TICKET_TRUE_ID = '10518da3';
+    const TICKET_TRUE_SECRET = 'fd1a7fec15a5';
+
+
     const ALL = 1;
     const TRAVEL = 4;
     const CHILDREN = 5;

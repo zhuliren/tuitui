@@ -40,9 +40,26 @@ class Controller extends \think\Controller
         $stringA = implode("", $newArr);  //连接参数
 //        $stringSignTemp = $stringA . "&key=A210HOhhog6979ibA89DA0HJO12NNLJL";
         // key是在商户平台API安全里自己设置的
-        $stringSignTemp = md5(PublicEnum::TICKET_SECRET.$stringA.PublicEnum::TICKET_SECRET); //将字符串进行MD5加密
+        $stringSignTemp = md5(PublicEnum::TICKET_TRUE_SECRET.$stringA.PublicEnum::TICKET_TRUE_SECRET); //将字符串进行MD5加密
 //        $sign = strtoupper($stringSignTemp); //将所有字符转换为大写
         return $stringSignTemp;
+    }
+
+    //  签名
+    public function Sign($params, $device_num)
+    {
+        ksort($params); //将参数数组按照参数名ASCII码从小到大排序
+        foreach ($params as $key => $item) {
+            if (!empty($item)) {  //剔除参数值为空的参数
+                $newArr[] = $key . $item; // 整合新的参数数组
+            }
+        }
+        $stringA = implode("", $newArr);  //连接参数
+//        $stringSignTemp = $stringA . "&key=A210HOhhog6979ibA89DA0HJO12NNLJL";
+        // key是在商户平台API安全里自己设置的
+        $stringSignTemp = md5($params['client_secret'].$stringA .$device_num ); //将字符串进行MD5加密
+//        $sign = strtoupper($stringSignTemp); //将所有字符转换为大写
+        return  strtoupper($stringSignTemp);
     }
 
 

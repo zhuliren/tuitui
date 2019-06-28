@@ -95,7 +95,18 @@ class Withdraw extends Controller
                 return json(['status'=>3001,'msg'=>'失败','data'=>'']);
             }
         }
+    }
 
+
+    public function refundProfit()
+    {
+        $all = $this->request->param();
+
+        if (isset($all['order_num']) && !empty($all['order_num'])){
+
+        }else{
+            return responseError();
+        }
     }
 
 
