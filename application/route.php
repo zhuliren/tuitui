@@ -101,8 +101,6 @@ Route::rule('clerkList', 'index/MallBusiness/clerkList');
 Route::rule('goodssharercode', 'index/MallShareCode/goodssharercode');
 
 
-
-
 Route::rule('myOrderNum', 'index/MallUser/myOrderNum');
 Route::rule('myDistri', 'index/MallUser/myDistribution');
 Route::rule('regBefore', 'index/MallUser/registerBefore');
@@ -141,12 +139,6 @@ Route::rule('insertBank', 'index/User/insertBankInfo');   //  新增用户银行
 Route::rule('createWithdrawOrder', 'index/User/createWithdrawOrder');   //  生成提现订单号
 
 
-
-
-
-
-
-
 Route::rule('ToExcel', 'admin/Excel/testExcel');   //
 
 Route::rule('allgoodsList', 'admin/Goods/allgoodsList');    //  所有已上线商品
@@ -160,6 +152,26 @@ Route::rule('cutOrder', 'admin/Order/cutOrder');   //  完成订单
 Route::rule('getWithdrawList', 'admin/Withdraw/getWithdrawList');   //  获取提现列表
 Route::rule('exportExcel', 'admin/Withdraw/exportExcel');   //  获取提现列表
 
+
+//推王争霸活动相关接口
+Route::rule('creatGame', 'index/MallGame/creatGame');   //  创建活动
+Route::rule('gameList', 'index/MallGame/gameList');   //  历史活动列表
+Route::rule('gameDetails', 'index/MallGame/gameDetails');   //  活动详情
+Route::rule('creatGameGoods', 'index/MallGame/creatGameGoods');   //  增加活动商品
+Route::rule('updGameGoods', 'index/MallGame/updGameGoods');   //  修改商品详情
+Route::rule('gameGoodsList', 'index/MallGame/gameGoodsList');   //  活动商品列表
+Route::rule('gameGoodsInfo', 'index/MallGame/gameGoodsInfo');   //  活动商品详情
+Route::rule('gameLeaderInfo', 'index/MallGame/gameLeaderInfo');   //  团长信息查询
+Route::rule('creatGameOrder', 'index/MallGame/creatGameOrder');   //  创建订单
+Route::rule('gameOrderPay', 'index/MallGame/gameOrderPay');   //  订单支付
+Route::rule('gameOrderPayConfirm', 'index/MallGame/gameOrderPayConfirm');   //  订单支付完成确认
+Route::rule('myGameOrderList', 'index/MallGame/myGameOrderList');   //  我的订单列表
+Route::rule('leaderGameOrderList', 'index/MallGame/leaderGameOrderList');   //  团长的订单列表
+Route::rule('gameOrderDetails', 'index/MallGame/gameOrderDetails');   //  订单详情
+Route::rule('gameOrderConfirm', 'index/MallGame/gameOrderConfirm');   //  团长确认订单
+Route::rule('allGameOrderList', 'index/MallGame/allGameOrderList');   //  全部订单列表
+Route::rule('gameUnifiedOrder', 'index/MallGame/gameUnifiedOrder');   //  微信预下单接口
+Route::rule('gamePayNotify', 'index/MallGame/gamePayNotify');   //  活动异步回调通知
 
 
 
