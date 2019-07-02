@@ -421,3 +421,27 @@ CREATE TABLE `ml_tbl_open_interface` (
   `ctime` int(10) default 0 COMMENT '创建时间',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+
+CREATE TABLE `ml_tbl_gamegoods` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `no` varchar(20) DEFAULT NULL COMMENT '活动编号',
+  `name` varchar(255) DEFAULT NULL,
+  `head` varchar(255) DEFAULT NULL COMMENT '商品头像',
+  `bighead` varchar(255) DEFAULT NULL COMMENT '商品大头像',
+  `introduction` varchar(255) DEFAULT NULL COMMENT '简介',
+  `size` varchar(20) DEFAULT NULL COMMENT '规格',
+  `maxlimit` int(10) DEFAULT '0' COMMENT '限购 0代表不限',
+  `minlimit` int(10) DEFAULT '0' COMMENT '起购 0代表不限',
+  `stock` int(10) DEFAULT NULL COMMENT '库存',
+  `bonus` float DEFAULT NULL COMMENT '分销返佣',
+  `price` float DEFAULT NULL COMMENT '售价',
+  `original` float DEFAULT NULL COMMENT '市场价',
+  `cost` float DEFAULT NULL COMMENT '成本（结算商户',
+  `notice` text COMMENT '购买须知',
+  `details` mediumtext COMMENT '商品详情',
+  `type` int(1) DEFAULT NULL COMMENT '状态0下架 1上架 2售罄',
+  `business_id` int(11) DEFAULT NULL COMMENT '商户id',
+  `weight` int(5) DEFAULT '100' COMMENT '权值越小越靠前',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
