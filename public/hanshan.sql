@@ -445,3 +445,60 @@ CREATE TABLE `ml_tbl_gamegoods` (
   `weight` int(5) DEFAULT '100' COMMENT '权值越小越靠前',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+ALTER TABLE ml_tbl_gameleaderinfo ADD COLUMN `lid` int(11) NOT NULL DEFAULT 0 COMMENT '战队队长id';
+ALTER TABLE ml_tbl_gameleaderinfo ADD COLUMN `join_time` DATE  DEFAULT NULL  COMMENT '加入战队时间';
+
+
+CREATE TABLE `ml_tbl_team_apply` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) not null DEFAULT 0 COMMENT '发出申请的用户id',
+  `leader_id` int(11) not null DEFAULT 0 COMMENT '战队队长id',
+  `ctime` int(10) default 0  COMMENT '创建时间',
+  `status` tinyint(1) default 0  COMMENT '0-未通过 1-通过 2-拒绝',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+ALTER TABLE ml_tbl_team_apply ADD COLUMN `no` char(20)  not null  DEFAULT 0  COMMENT '活动期数';
+
+CREATE TABLE `ml_tbl_game_chart` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `no` int(11) not null DEFAULT 0 COMMENT '活动期数',
+  `img` varchar(255) not null DEFAULT 0 COMMENT '图片地址',
+  `url` varchar(255) default 0  COMMENT '图片跳转的页面',
+  `status` tinyint(1) default 0  COMMENT '0-不显示 1-显示',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+CREATE TABLE `ml_tbl_game_goods_class` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) not null DEFAULT 0 COMMENT '分类名',
+  `asname` varchar(255) not null default 0  COMMENT '别名',
+  `cls_icon` varchar(255) not null default 0  COMMENT '图片跳转的页面',
+  `status` tinyint(1)  default 1  COMMENT '0-不显示 1-显示',
+  `ctime` int(10) default 0  COMMENT '创建时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+
+
+ALTER TABLE ml_tbl_gamegoods ADD COLUMN `goods_type` tinyint(1) not null DEFAULT 0  COMMENT '商品类型 1-核销 2-配送';
+
+CREATE TABLE `ml_tbl_game_goodsclass` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `goods_id` int(11) not null DEFAULT 0 COMMENT '分类名',
+  `class_id` int(11) not null default 0  COMMENT '别名',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COMMENT '商品分类关系表';
+
+ALTER TABLE ml_tbl_gameorder ADD COLUMN `address` varchar(255) not null DEFAULT 0  COMMENT '地址';
+
+
+CREATE TABLE `ml_tbl_user_address` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) not null DEFAULT 0 COMMENT '用户id',
+  `name` varchar(255) not null default 0  COMMENT '用户名',
+  `address` varchar(255) not null default 0  COMMENT '住址',
+  `status` tinyint(1) not null default 1  COMMENT '状态 1-正常 0-删除',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COMMENT '用户地址表';

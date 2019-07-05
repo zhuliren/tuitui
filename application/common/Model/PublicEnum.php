@@ -47,6 +47,10 @@ class PublicEnum
     const ORDER_PAY = 'FTWQioPcN2CR5McOXgXsKqR-A0JRdV_ZZwLH-AZv_8o';
     const ORDER_NOPAY = 'xkYXbN8lYHVNZMKSKKl9Y0AmjlYhes9X2izDNHNS_TM';
 
+    const TEAM_APPLY = '9GuLAo3sFbr07driVIbCM8fUFNMpAFkEPzQHPWaCK60';
+    const TEAM_SUCCESS = 'KEUf_AXLX-93_ryivUVhTGyX7sMc07BMTju2bjH3Ju8';
+    const TEAM_FAIL = 'm0d24YjHYsDBMWfTDbe0jXQCcvKF3q1NsMs24gl47R0';
+
     /* ----  ----  ---- 不一定使用,记住类型 ----  ---- ----  ----- */
     const Success = 1001;       //  成功
     const PARAM_ERROR = 2001;   // 传递的参数错误

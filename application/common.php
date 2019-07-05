@@ -280,3 +280,50 @@ function FromXml($xml)
     $data = json_decode(json_encode(simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA)), true);
     return $data;
 }
+
+// 将xml转化成json
+function get_json($data)
+{
+    $data = iconv("UTF-8", "GBK", $data); // 转成utf-8格式
+    $res = json_decode(json_encode(simplexml_load_string($data)),true);
+    return $res;
+}
+
+
+function subString_UTF8($str, $start, $lenth)
+{
+    $len = strlen($str);
+    $r = array();
+    $n = 0;
+    $m = 0;
+    for ($i = 0; $i < $len; $i++) {
+        $x = substr($str, $i, 1);
+        $a = base_convert(ord($x), 10, 2);
+        $a = substr('00000000' . $a, -8);
+        if ($n < $start) {
+            if (substr($a, 0, 1) == 0) {
+            } elseif (substr($a, 0, 3) == 110) {
+                $i += 1;
+            } elseif (substr($a, 0, 4) == 1110) {
+                $i += 2;
+            }
+            $n++;
+        } else {
+            if (substr($a, 0, 1) == 0) {
+                $r[] = substr($str, $i, 1);
+            } elseif (substr($a, 0, 3) == 110) {
+                $r[] = substr($str, $i, 2);
+                $i += 1;
+            } elseif (substr($a, 0, 4) == 1110) {
+                $r[] = substr($str, $i, 3);
+                $i += 2;
+            } else {
+                $r[] = '';
+            }
+            if (++$m >= $lenth) {
+                break;
+            }
+        }
+    }
+    return join($r);
+}

@@ -245,6 +245,21 @@ Route::rule('gameOrderConfirm', 'index/MallGame/gameOrderConfirm');   //  团长
 Route::rule('allGameOrderList', 'index/MallGame/allGameOrderList');   //  全部订单列表
 Route::rule('gameUnifiedOrder', 'index/MallGame/gameUnifiedOrder');   //  微信预下单接口
 Route::rule('gamePayNotify', 'index/MallGame/gamePayNotify');   //  活动异步回调通知
+Route::rule('joinTeam', 'index/MallGame/joinTeam');   //  加入团队
+Route::rule('editTeamInfo', 'index/MallGame/editTeamInfo');   //  处理消息
+Route::rule('joinGame', 'index/MallGame/joinGame');   //  加入活动
+Route::rule('myTeamInfo', 'index/MallGame/myTeamInfo');   //  我的信息
+Route::rule('gameChatInfo', 'index/MallGame/gameChatInfo');   //  我的信息
+Route::rule('getmemberstatus', 'index/MallGame/getmemberstatus');   //  查看用户会员状态
+Route::rule('getmyteamdata', 'index/MallGame/getmyteamdata');   //  查看用户会员状态
+Route::rule('allteamInfo', 'index/MallGame/allteamInfo');   //  所有战队信息
+
+//  新增的
+Route::rule('addGameClass', 'index/MallGame/addGameClass');   //  新增分类
+Route::rule('updateGameClass', 'index/MallGame/updateGameClass');   //  修改分类
+Route::rule('getgameclass', 'index/MallGame/getgameclass');   //  修改分类
+Route::rule('getrankdata', 'index/MallGame/getrankdata');   //  修改分类
+Route::rule('getclassInfo', 'index/MallGame/getclassInfo');   //  修改分类
 
 
 
