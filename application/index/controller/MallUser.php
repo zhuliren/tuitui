@@ -383,20 +383,9 @@ class MallUser
 
         $out_list = Db::name('ml_tbl_order')->whereIn('user_id',$ids)->whereIn('order_type','1,2,3,6')->select();
         $data['out_list'] = count($out_list);
-        $goodsId = '';
-        foreach ($out_list as $k=>$v){
-            $goodsId .= $v['id'] . ',';
-        }
-        $goodsId = rtrim($goodsId,',');
-        $goodsDetail = Db::name('ml_tbl_order_details')->whereIn('order_zid', $goodsId)->field('goods_id,goods_num,format_id')->select();
-        $data['distriMoney'] = 0;
-        foreach ($goodsDetail as $k => $v) {
-            $bouns_price = Db::name('ml_tbl_goods')->where('id', $v['goods_id'])->field('bonus_price')->find();
-            if (!$bouns_price){
-                $bouns_price['bonus_price'] = Db::name('ml_tbl_goods_format')->where('id',$v['format_id'])->field('first_bonus')->find();
-            }
-            $data['distriMoney'] += $bouns_price['bonus_price'] * $v['goods_num'];
-        }
+
+        $data['distriMoney'] = Db::name('ml_tbl_wallet')->where('user_id',$all['user_id'])->value('balance');
+
         $ctime = '';
         foreach ($list as $k => $v) {
             if (!empty($v['creat_time']) && ($ctime < $v['creat_time'])) {
@@ -478,7 +467,7 @@ class MallUser
                 $res = Db::name('ml_tbl_wallet')->where('user_id',$all['user_id'])->find();
                 if ($res > 0){
                     $data['balance'] = $res['balance'];
-                    $data['wallet_detail'] = Db::name('ml_tbl_wallet_details')->where('wallet_id',$res['id'])->field('time,amount,type,order_num')->select();
+                    $data['wallet_detail'] = Db::name('ml_tbl_wallet_details')->where('wallet_id',$res['id'])->field('time,amount,type,order_num')->order('time','asc')->select();
                 }else{
                     $data['balance'] = 0;
                     $data['wallet_detail'] = [];

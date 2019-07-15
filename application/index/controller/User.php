@@ -451,7 +451,7 @@ class user
             }
             //TODO 目前绑定推推项目均为分销员，到期时间为5月31日
             $selesmantype = 1;
-            $salesman_due = '2019-05-31';
+            $salesman_due = '2020-05-31';
             //绑定
             $userdata = ['ml_user_id' => $ml_user_id, 'xm_user_id' => $user_id, 'creat_time' => date("Y-m-d h:i:s", time())];
             Db::table('ml_xm_binding')->insert($userdata);

@@ -423,6 +423,26 @@ class WechatPay extends Controller
                     $xm_type = 0;
                 }
 
+                    $channeldata = Db::table('ml_tbl_channel')->where('ml_user_id', $order_info['u_id'])->find();
+                    if ($channeldata){
+                        //查询上级在商城的id
+                        $bindingdata = Db::table('ml_xm_binding')->where('xm_user_id', $channeldata['xm_user_id'])->find();
+
+                        if ($bindingdata){
+                            $wallet_info = Db::name('ml_tbl_wallet')->where('user_id',$bindingdata['ml_user_id'])->find();
+
+                            if ($wallet_info){
+                                Db::name('ml_tbl_wallet')->where('user_id',$bindingdata['ml_user_id'])->update(['balance'=>($wallet_info+100)]);
+                                $wallet_id = $wallet_info['id'];
+                            }else{
+                                $wallet_id = Db::name('ml_tbl_wallet')->insertGetId(['user_id'=>$order_info['u_id'],'balance'=>0,'creat_time'=>date('Y-m-d H:i:s')]);
+                            }
+
+                            Db::name('ml_tbl_wallet_details')->insert(['wallet_id'=>$wallet_id,'time'=>date('Y-m-d H:i:s'), 'amount'=>100,'nowbalance'=>100,'type'=>1,'remarks'=>'个人返佣','order_num'=>$order_info['order_num'] ]);
+                        }
+                    }
+
+
                 if ($info){
                     $data = ['status'=>1,'msg'=>'成功','data'=>$xm_type];
                 }else{

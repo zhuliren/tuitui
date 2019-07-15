@@ -60,18 +60,6 @@ class Order extends Controller
                                     Db::rollback();
                                 }
                             }
-                            if ($goods_info['third_bonus'] != 0){
-                                $the_last_xmid = Db::name('ml_tbl_channel')->where('ml_user_id',$up_up_mlid)->value('xm_user_id');
-                                if ($the_last_xmid){
-                                    $the_last_mlid = Db::name('ml_xm_binding')->where('xm_user_id',$the_last_xmid)->value('ml_user_id');
-                                    $third_total = $order_detail['goods_num'] * $goods_info['second_bonus'];
-                                    $third_remark = '团队返佣';
-                                    $wallet_status = $this->walletOperate($the_last_mlid,$third_total,$third_remark,$all['order_id']);
-                                    if (!$wallet_status){
-                                        Db::rollback();
-                                    }
-                                }
-                            }
                         }
                     }
                 }

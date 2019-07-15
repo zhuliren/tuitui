@@ -253,6 +253,10 @@ Route::rule('gameChatInfo', 'index/MallGame/gameChatInfo');   //  我的信息
 Route::rule('getmemberstatus', 'index/MallGame/getmemberstatus');   //  查看用户会员状态
 Route::rule('getmyteamdata', 'index/MallGame/getmyteamdata');   //  查看用户会员状态
 Route::rule('allteamInfo', 'index/MallGame/allteamInfo');   //  所有战队信息
+Route::rule('gamegoodsdown', 'index/MallGame/gamegoodsdown');   //  商品下架
+Route::rule('gamedown', 'index/MallGame/gamedown');   //  活动下架
+Route::rule('editGameInfo', 'index/MallGame/editGameInfo');   //  修改活动信息
+Route::rule('gamegoodsrcode', 'index/MallGame/gamegoodsrcode');   //  活动分享二维码
 
 //  新增的
 Route::rule('addGameClass', 'index/MallGame/addGameClass');   //  新增分类
@@ -260,6 +264,15 @@ Route::rule('updateGameClass', 'index/MallGame/updateGameClass');   //  修改�
 Route::rule('getgameclass', 'index/MallGame/getgameclass');   //  修改分类
 Route::rule('getrankdata', 'index/MallGame/getrankdata');   //  修改分类
 Route::rule('getclassInfo', 'index/MallGame/getclassInfo');   //  修改分类
+Route::rule('getUserAddress', 'index/MallGame/getUserAddress');   //  获取用户地址
+Route::rule('addmyaddress', 'index/MallGame/addmyaddress');   //  增加地址
+Route::rule('leaderstatus', 'index/MallGame/leaderstatus');   //  判断是否是团长
+
+
+
+
+Route::rule('createWxQrcode', 'index/MallGame/createWxQrcode');   //  判断是否是团长
+Route::rule('createMiniWechat', 'index/MallGame/createMiniWechat');   //  判断是否是团长
 
 
 

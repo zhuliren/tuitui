@@ -454,6 +454,7 @@ ALTER TABLE ml_tbl_gameleaderinfo ADD COLUMN `join_time` DATE  DEFAULT NULL  COM
 CREATE TABLE `ml_tbl_team_apply` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) not null DEFAULT 0 COMMENT '发出申请的用户id',
+  `no` int(10) not null default 0 COMMENT '活动期数',
   `leader_id` int(11) not null DEFAULT 0 COMMENT '战队队长id',
   `ctime` int(10) default 0  COMMENT '创建时间',
   `status` tinyint(1) default 0  COMMENT '0-未通过 1-通过 2-拒绝',
@@ -499,6 +500,28 @@ CREATE TABLE `ml_tbl_user_address` (
   `user_id` int(11) not null DEFAULT 0 COMMENT '用户id',
   `name` varchar(255) not null default 0  COMMENT '用户名',
   `address` varchar(255) not null default 0  COMMENT '住址',
+  `tel` varchar(15) not null default 0 COMMENT '手机号',
   `status` tinyint(1) not null default 1  COMMENT '状态 1-正常 0-删除',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COMMENT '用户地址表';
+
+
+ALTER TABLE ml_tbl_gamegoods ADD COLUMN `is_fixtime` tinyint(1)  not null  DEFAULT 0  COMMENT '是否指定时间 1-需要指定 0-不需要';
+ALTER TABLE ml_tbl_gamegoods ADD COLUMN `is_realname` tinyint(1)  not null  DEFAULT 0  COMMENT '是否实名 1-实名 0-不需要';
+
+ALTER TABLE ml_tbl_gameorder ADD COLUMN `fixtime` date   DEFAULT null  COMMENT '指定的时间';
+ALTER TABLE ml_tbl_gameorder ADD COLUMN `realname` varchar(50)  not null  DEFAULT 0  COMMENT '真实姓名';
+ALTER TABLE ml_tbl_gameorder ADD COLUMN `id_card` varchar(50)  not null  DEFAULT 0  COMMENT '身份证号';
+
+CREATE TABLE `ml_tbl_game_rcode` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `goods_id` int(11) DEFAULT NULL,
+  `upid` int(11) DEFAULT NULL,
+  `url` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+ALTER TABLE ml_tbl_user_address ADD COLUMN `tel` char(15)  not null  DEFAULT 0  COMMENT '手机号';
+
+
+ALTER TABLE ml_tbl_gameinfo ADD COLUMN `url` varchar(255)  not null  DEFAULT 0  COMMENT '跳转地址';
