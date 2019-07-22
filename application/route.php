@@ -276,5 +276,23 @@ Route::rule('createMiniWechat', 'index/MallGame/createMiniWechat');   //  判断
 
 
 
+Route::rule('corPay', 'index/User/corPay');   //  打款到零钱
+Route::rule('recommend', 'index/Mall/recommend');   //  爆款
+Route::rule('joinRecommend', 'admin/Goods/joinRecommend');   //  加入或取消爆款
+Route::rule('editUpid', 'index/MallUser/editUpid');   //  修改上级
+
+
+
+Route::rule('getLottery', 'index/Lottery/getLottery');   //  获取活动信息
+Route::rule('joinLottery', 'index/Lottery/joinLottery');   //  参加活动
+Route::rule('isSalesman', 'index/Lottery/isSalesman');   //  是否是会员
+Route::rule('isShare', 'index/Lottery/isShare');   //  是否分享
+Route::rule('createSalesmanOrder', 'index/Lottery/createSalesmanOrder');   //  是否分享
+Route::rule('buySalesman', 'index/Lottery/buySalesman');   //  一元购买会员
+Route::rule('lotteryRcode', 'index/Lottery/lotteryRcode');   //  用户二维码
+Route::rule('editShare', 'index/Lottery/editShare');   //  修改分享
+
+
+
 
 

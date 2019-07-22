@@ -10,11 +10,12 @@ namespace app\index\controller;
 
 
 use app\common\Model\PublicEnum;
+use app\index\Controller;
 use app\index\model\UserModel;
 use think\Db;
 use think\Request;
 
-class user
+class user extends Controller
 {
     public function userRegister()
     {
@@ -830,6 +831,93 @@ class user
 
 
 
+    public function corPay()
+    {
+        $all = $this->request->param();
+        if (!isset($all['order_id']) || empty($all['order_id'])){
+            return responseError();
+        }
+        $order_state = Db::name('ml_tbl_withdraw')->where('order_no',$all['order_id'])->find();
+        if (!$order_state){
+            return responseError([],2001,'未找到提现订单信息');
+        }
+        $user_info = Db::name('ml_tbl_user')->where('id',$order_state['uid'])->find();
+
+        $data = [
+            'mch_appid'=>PublicEnum::WX_APPID,
+            'mchid'=>'1501953711',
+            'nonce_str'=>nonce_str(),
+            'partner_trade_no'=>$all['order_id'],
+            'openid'=>$user_info['wechat_open_id'],
+            'check_name'=>'NO_CHECK',
+            'amount'=>$order_state['amount'] * 100,
+            'desc'=>'提现到账',
+            'spbill_create_ip'=>'192.168.0.2',
+//            'notify_url'=>'127.0.0.1/SZhanshan/public/corpayNotify'
+        ];
+
+        $sign = $this->getSign($data);
+        $data['sign'] = $sign;
+        $xmldata = $this->ToXml($data);
+        $url = "https://api.mch.weixin.qq.com/mmpaymkttransfers/promotion/transfers";
+        $res = $this->http_send_query($url,$xmldata);
+        $result = FromXml($res);
+        if ($result['return_code'] == 'SUCCESS') {
+            if ($result['result_code'] == 'SUCCESS') {
+                Db::name('ml_tbl_withdraw')->where('order_no',$all['order_id'])->update(['status'=>1,'pay_time'=>strtotime($res['payment_time']),'payment_no'=>$res['payment_no']]);
+                return responseSuccess();
+            }else{
+                return responseError([],2001,$result['err_code_des']);
+            }
+        }else{
+            return responseError([],2001,$result['return_msg']);
+        }
+    }
+
+    public function corpayNotify()
+    {
+
+        $testxml = file_get_contents("php://input");
+
+        $jsonxml = json_encode(simplexml_load_string($testxml, 'SimpleXMLElement', LIBXML_NOCDATA));
+
+        $result = json_decode($jsonxml, true);//转成数组，
+        if ($result) {
+            //如果成功返回了
+            $out_trade_no = $result['out_trade_no'];
+            if ($result['return_code'] == 'SUCCESS' && $result['result_code'] == 'SUCCESS') {
+                //执行业务逻辑
+
+                Db::name('ml_tbl_withdraw')->where('order_no', $out_trade_no)->update(['status' => 1]);
+
+            }
+        }
+
+
+    }
+
+
+
+    public function editMyAddress()
+    {
+        $all = $this->request->param();
+        if (!isset($all['id']) || empty($all['id'])){
+            return responseError();
+        }
+
+        if (isset($all['tel']) && !empty($all['tel'])){
+            if (!preg_mobile($all['tel'])){
+                return responseError();
+            }
+        }
+        $res = Db::name('ml_tbl_user_address')->where('id',$all['id'])->update($all);
+
+        if ($res){
+            return responseSuccess();
+        }else{
+            return responseError();
+        }
+    }
 
 
 

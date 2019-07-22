@@ -71,16 +71,6 @@ class MallUser
                     $time_mark = 1 ;
                 }
                 $activity = Db::name('ml_tbl_user')->where('id',$userdetails['id'])->find();
-                $lead_status = Db::name('ml_tbl_event_member')->where('user_id',$userdetails['id'])->find();
-                if ($lead_status){
-                    if ($lead_status['pid'] == 0){
-                        $lead = 1;
-                    }else{
-                        $lead = 0;
-                    }
-                }else{
-                    $lead = 0;
-                }
 
                 $returndata = array('user_id' => $userdetails['id'], 'openid' => $openid, 'is_salesman' => $userdetails['is_salesman'],'mark'=>$activity['activity_mark'],'time'=>$userdetails['salesman_due'], 'salsman_type'=>$userdetails['salsman_type'], 'time_mark'=>$time_mark);
                 $data = array('status' => 0, 'msg' => '登录成功', 'data' => $returndata);
@@ -139,8 +129,10 @@ class MallUser
             //判断是否是同一个id
             if ($up_user_id != $user_id) {
                 //查询用户是否存在上级
+                $user_info = Db::name('ml_tbl_channel')->where('id',$user_id)->find();
                 $selectchanel = Db::table('ml_tbl_channel')->where('ml_user_id', $user_id)->find();
-                if ($selectchanel) {
+
+                if ($user_info['upid'] != 0) {
                     //TODO 判断用户上级是否过期 判断条件为当前用户成为下级后30天无已完成单
                     //查询用户订单情况
                     //30天前和今日时间点
@@ -148,20 +140,23 @@ class MallUser
                     $enddatetime = date("Y-m-d");
                     //判断用户是否已经成为下级满足30天
                     if ($selectchanel['creat_time'] < $stardatetime) {
-                        $pro_data = Db::table('xm_tbl_pro_data')
+                        $pro_data = Db::table('ml_tbl_order')
                             ->where('user_id', $user_id)
-                            ->where('order_type', 3)
+                            ->whereIn('order_type', '')
                             ->whereTime('pro_datatime', 'between', [$stardatetime, $enddatetime])
                             ->select();
+
+
                         if (!$pro_data) {
                             //查询上级是否是代理商
                             $selectupid = Db::table('ml_tbl_user')->where('id', $up_user_id)->find();
                             if ($selectupid['is_salesman'] == 1) {
+
                                 //查询代理商在推推项目的id
                                 $selectupxmid = Db::table('ml_xm_binding')->where('ml_user_id', $up_user_id)->find();
                                 $upxmid = $selectupxmid['xm_user_id'];
                                 //更新渠道表
-                                Db::table('ml_tbl_channel')->where('ml_user_id', $user_id)->update(['xm_user_id' => $upxmid, 'creat_time' => date("Y-m-d H:i:s", time())]);
+                                Db::table('ml_tbl_channel')->where('ml_user_id', $user_id)->update(['upid' => $upxmid, 'ctime' => date("Y-m-d H:i:s", time())]);
                             }
                         }
                     }
@@ -256,26 +251,14 @@ class MallUser
         $user_id = $_REQUEST['userid'];
         //查询用户是否绑定推推项目
         $userModel = new UserModel();
-        $wallet_edit = (new UserModel())->walletEdit($user_id);
-
         $isbinding = $userModel->mlxmBinding($user_id);
         $issalesman = Db::table('ml_tbl_user')->where('id', $user_id)->find();
-//        $myDistriMoney = $userModel->getDistributionMoney($user_id);
         $myDistriMoney = Db::name('ml_tbl_wallet')->where('user_id',$user_id)->find();
-        if ($isbinding) {
-            //获取用户在推推项目的id
-            $selectxmuserid = Db::table('ml_xm_binding')->where('ml_user_id', $user_id)->find();
-            if ($selectxmuserid['xm_user_id']) {
-                //查询用户优惠券数量
-                $selectcoupon = Db::table('xm_tbl_coupon')->where('user_id', $selectxmuserid['xm_user_id'])->select();
-                $coupon_num = count($selectcoupon);
-            } else {
-                $coupon_num = 0;
-            }
-            $returndata = array('coupon_num' => $coupon_num, 'user_id' => $user_id, 'isbinding' => 1, 'issalesman' => $issalesman['is_salesman'], 'myDistriMoney'=>$myDistriMoney['balance']);
-        } else {
-            $returndata = array('coupon_num' => 0, 'user_id' => $user_id, 'isbinding' => 1, 'issalesman' => $issalesman['is_salesman'], 'myDistriMoney'=>$myDistriMoney['balance']);
-        }
+        //查询用户优惠券数量
+        $selectcoupon = Db::table('xm_tbl_coupon')->where('user_id', $user_id)->select();
+        $coupon_num = count($selectcoupon);
+        $returndata = array('coupon_num' => $coupon_num, 'user_id' => $user_id, 'isbinding' => 1, 'issalesman' => $issalesman['is_salesman'], 'myDistriMoney'=>$myDistriMoney['balance']);
+
         $data = array('status' => 1, 'msg' => '未绑定', 'data' => $returndata);
         return json($data);
     }
@@ -538,14 +521,8 @@ class MallUser
         if ($request->isPost()){
             $all = $request->param();
             if (isset($all['user_id']) && !empty($all['user_id'])){
-                $xm_id = Db::name('ml_xm_binding')->where('ml_user_id',$all['user_id'])->value('xm_user_id');
-                $id_list = Db::name('ml_tbl_channel')->where('xm_user_id',$xm_id)->field('ml_user_id')->select();
-                $ids = '';
-                foreach ($id_list as $k=>$v){
-                    $ids .= $v['ml_user_id']. ',';
-                }
-                $ids = rtrim($ids,',');
-                $list = Db::name('ml_tbl_user')->whereIn('id',$ids)->select();
+
+                $list = Db::name('ml_tbl_user')->where('upid',$all['user_id'])->select();
                 if ($list > 0){
                     return json(['status'=>1001,'msg'=>'成功','data'=>$list]);
                 }else{
@@ -862,6 +839,25 @@ class MallUser
 
             return $res;
         }
+    }
+
+
+    public function editUpid()
+    {
+        $all = Db::name('ml_tbl_user')->field('id')->order('id','asc')->select();
+
+        foreach ($all as $k=>$v){
+            $xm_id = Db::name('ml_tbl_channel')->where('ml_user_id',$v['id'])->value('xm_user_id');
+            $ctime = Db::name('ml_tbl_channel')->where('ml_user_id',$v['id'])->value('creat_time');
+            if ($xm_id){
+                $ml_id = Db::name('ml_xm_binding')->where('xm_user_id',$xm_id)->value('ml_user_id');
+                $res = Db::name('ml_tbl_user')->where('id',$v['id'])->update(['upid'=>$ml_id,'ctime'=>$ctime]);
+            }else{
+                $res = Db::name('ml_tbl_user')->where('id',$v['id'])->update(['upid'=>0]);
+            }
+        }
+
+        return responseSuccess();
     }
 
 

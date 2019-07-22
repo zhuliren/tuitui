@@ -238,8 +238,44 @@ class WechatPay extends Controller
                     $order_zid = $order_data['id'];
                     //修改商品库存及商品售出
 
-                    //查询商品是否为第三方订单商品
                     $goods_data = Db::table('ml_tbl_order_details')->where('order_zid', $order_zid)->select();
+
+                    // TODO::放开需要先停止调用cutOrder的返佣
+
+                    //  返佣
+                    if ($goods_data){,
+                        $user_info = Db::name('ml_tbl_user')->where('id',$order_data['user_id'])->find();
+                        $detail = $goods_data[0];
+                        $format_data = Db::name('ml_tbl_goods_format')->where('id',$detail['format_id'])->find();
+                        if ($user_info['upid'] != 0){
+                            if ($format_data['first_bonus'] != 0){
+                                $first = $detail['goods_num'] * $format_data['first_bonus'];
+                                $wallet_state = Db::name('ml_tbl_wallet')->where('user_id',$user_info['upid'])->find();
+                                if ($wallet_state){
+                                    Db::name('ml_tbl_wallet')->where('user_id',$user_info['upid'])->update(['balance'=>($wallet_state['balance'] + $first)]);
+                                    Db::name('ml_tbl_wallet_details')->insert(['wallet_id'=>$wallet_state['id'],'time'=>date('Y-m-d H:i:s'),'amount'=>$first,'nowbalance'=>($wallet_state['balance'] + $first),'type'=>1,'remarks'=>'个人返佣','order_num'=>$order_id]);
+                                }else{
+                                    Db::name('ml_tbl_wallet')->insert(['user_id'=>$user_info['upid'],'balance'=>$first,'creat_time'=>date('Y-m-d H:i:s')]);
+                                    Db::name('ml_tbl_wallet_details')->insert(['wallet_id'=>$wallet_state['id'],'time'=>date('Y-m-d H:i:s'),'amount'=>$first,'nowbalance'=> $first,'type'=>1,'remarks'=>'个人返佣','order_num'=>$order_id]);
+                                }
+                            }
+                            //  二级返佣
+                            if ($format_data['second_bonus'] != 0){
+                                $second = $detail['goods_num'] * $format_data['second_bonus'];
+                                $up_info = Db::name('ml_tbl_user')->where('id',$user_info['upid'])->find();
+                                $wallet_state_ = Db::name('ml_tbl_wallet')->where('user_id',$up_info['upid'])->find();
+                                if ($wallet_state_){
+                                    Db::name('ml_tbl_wallet')->where('user_id',$up_info['upid'])->update(['balance'=>($wallet_state_['balance'] + $second)]);
+                                    Db::name('ml_tbl_wallet_details')->insert(['wallet_id'=>$wallet_state_['id'],'time'=>date('Y-m-d H:i:s'),'amount'=>$second,'nowbalance'=>($wallet_state_['balance'] + $second),'type'=>1,'remarks'=>'个人返佣','order_num'=>$order_id]);
+                                }else{
+                                    Db::name('ml_tbl_wallet')->insert(['user_id'=>$up_info['upid'],'balance'=>$first,'creat_time'=>date('Y-m-d H:i:s')]);
+                                    Db::name('ml_tbl_wallet_details')->insert(['wallet_id'=>$wallet_state_['id'],'time'=>date('Y-m-d H:i:s'),'amount'=>$second,'nowbalance'=> $second,'type'=>1,'remarks'=>'个人返佣','order_num'=>$order_id]);
+                                }
+                            }
+                        }
+
+                    }
+                    //查询商品是否为第三方订单商品
                     foreach ($goods_data as $goodsitem) {
                         $goods_id = $goodsitem['goods_id'];
                         //查询商品是否为第三方商品
@@ -272,35 +308,8 @@ class WechatPay extends Controller
                         }
                     }
 
-
                     // 修改优惠券状态
                     Db::name('xm_tbl_coupon')->where('id',$order_data['coupon_id'])->update(['use_status'=>2]);
-                    /*
-                    if ($order_data['coupon_id']){
-                        //  1不可以10元618优惠券
-                        $data = array('status' => 0, 'msg' => '成功', 'data' => 1);
-                    }else{
-                        //  是否拒绝过
-                        $status = Db::name('ml_tbl_coupon_tmp')->where('uid',$order_data['user_id'])->find();
-                        $cpn = Db::name('xm_tbl_coupon')->where('user_id',$order_data['user_id'])->select();
-
-                        if (isset($status['uid']) && !empty($status['uid'])){
-                            $data = array('status' => 0, 'msg' => '成功', 'data' => 1);
-                        }else{
-                            foreach ($cpn as $k=>$v){
-                                if (($v['coup_type'] == 1) && ($v['par_value'] == 10)){
-                                    //  1不可以10元618优惠券
-                                    $data = array('status' => 0, 'msg' => '成功', 'data' => 1);
-
-                                }else{
-
-                                    //  2可以领
-                                    $data = array('status' => 0, 'msg' => '成功', 'data' => 2);
-                                }
-                            }
-                        }
-                    }
-                    */
                 }
             } else {
                 $data = array('status' => 1, 'msg' => '订单未支付', 'data' => '');

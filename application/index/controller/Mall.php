@@ -163,6 +163,9 @@ class Mall
                 ->where('goods_sort',99)
 //                ->field('id,goods_name,goods_stock,ex_time,bonus_price,goods_price,goods_original_price,goods_sell_out,head_img,goods_summary')
                 ->select();
+            foreach ($res as $k=>$v){
+                $res[$k]['stock'] = Db::name('ml_tbl_goods_format')->where(['goods_id'=>$v['id']])->field('sum(goods_stock) as stock')->select();
+            }
             if ($res > 0){
                 return json(['status'=>1001,'msg'=>'成功','data'=>$res]);
             }else{
@@ -250,7 +253,7 @@ class Mall
     public function getClassList()
     {
 
-        $selectgoodsclass = Db::table('ml_tbl_goods_class')->select();
+        $selectgoodsclass = Db::table('ml_tbl_goods_class')->where('0','<>',0)->order('sort','asc')->select();
         return json(['status'=>1001,'msg'=>'获取分类成功','data'=>$selectgoodsclass]);
 
     }
@@ -319,6 +322,15 @@ class Mall
         }
     }
 
+    public function recommend()
+    {
+        $list = Db::name('ml_tbl_goods_two')
+            ->where(['is_online'=>1,'recommend'=>1])
+            ->field('id,goods_name,goods_stock,ex_time,bonus_price,goods_price,goods_original_price,goods_sell_out,head_img,goods_summary')
+            ->select();
+
+        return responseSuccess(['list'=>$list],1001,'成功');
+    }
 
 
 }

@@ -57,7 +57,7 @@ class Controller extends \think\Controller
         $stringA = implode("", $newArr);  //连接参数
 //        $stringSignTemp = $stringA . "&key=A210HOhhog6979ibA89DA0HJO12NNLJL";
         // key是在商户平台API安全里自己设置的
-        $stringSignTemp = md5($params['client_secret'].$stringA .$device_num ); //将字符串进行MD5加密
+        $stringSignTemp = md5($params['client_secret'].$stringA  ); //将字符串进行MD5加密
 //        $sign = strtoupper($stringSignTemp); //将所有字符转换为大写
         return  strtoupper($stringSignTemp);
     }
@@ -95,8 +95,39 @@ class Controller extends \think\Controller
         curl_close($ch);
 
         return $data;
+    }
 
+    public function getSign($params)
+    {
+        ksort($params); //将参数数组按照参数名ASCII码从小到大排序
+        foreach ($params as $key => $item) {
+            if (!empty($item)) {  //剔除参数值为空的参数
+                $newArr[] = $key . '=' . $item; // 整合新的参数数组
+            }
+        }
+        $stringA = implode("&", $newArr);  //使用 & 符号连接参数
+        $stringSignTemp = $stringA . "&key=A210HOhhog6979ibA89DA0HJO12NNLJL";
+        // key是在商户平台API安全里自己设置的
+        $stringSignTemp = md5($stringSignTemp); //将字符串进行MD5加密
+        $sign = strtoupper($stringSignTemp); //将所有字符转换为大写
+        return $sign;
+    }
 
+    public function ToXml($data = array())
+    {
+        if (!is_array($data) || count($data) <= 0) {
+            return '数组数据异常';
+        }
+        $xml = "<xml>";
+        foreach ($data as $key => $val) {
+            if (is_numeric($val)) {
+                $xml .= "<" . $key . ">" . $val . "</" . $key . ">";
+            } else {
+                $xml .= "<" . $key . "><![CDATA[" . $val . "]]></" . $key . ">";
+            }
+        }
+        $xml .= "</xml>";
+        return $xml;
     }
 
 }

@@ -453,4 +453,30 @@ class Goods extends Controller
 
     }
 
+
+    public function joinRecommend()
+    {
+        $all = $this->request->param();
+        if (!isset($all['id']) || empty($all['id'])){
+            return responseError();
+        }
+
+        if (!isset($all['type']) || empty($all['type']) ){
+            return responseError();
+        }
+        $goods_state = Db::name('ml_tbl_goods_two')->where('id',$all['id'])->find();
+        if (!$goods_state){
+            return responseError([],2001,'商品不存在');
+        }
+
+        if ($all['type'] == 1){
+            Db::name('ml_tbl_goods_two')->where('id',$all['id'])->update(['recommend'=>1]);
+        }else{
+            Db::name('ml_tbl_goods_two')->where('id',$all['id'])->update(['recommend'=>0]);
+        }
+
+        return responseSuccess();
+    }
+
+
 }

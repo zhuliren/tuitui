@@ -525,3 +525,25 @@ ALTER TABLE ml_tbl_user_address ADD COLUMN `tel` char(15)  not null  DEFAULT 0  
 
 
 ALTER TABLE ml_tbl_gameinfo ADD COLUMN `url` varchar(255)  not null  DEFAULT 0  COMMENT '跳转地址';
+
+
+ALTER TABLE ml_tbl_goods_class ADD COLUMN `icon` char(100)  not null  DEFAULT 0  COMMENT '图标';
+
+ALTER TABLE ml_tbl_withdraw ADD COLUMN `payment_no` char(100)  not null  DEFAULT 0  COMMENT '微信付款单号';
+ALTER TABLE ml_tbl_goods_class ADD COLUMN `sort` char(100)  not null  DEFAULT 0  COMMENT '排序';
+ALTER TABLE ml_tbl_goods_two ADD COLUMN `recommend` tinyint(1)  not null  DEFAULT 0  COMMENT '爆款 0-不上爆款 1-上爆款';
+ALTER TABLE ml_tbl_user_address ADD COLUMN `area` varchar(255)  DEFAULT NULL  COMMENT '区域';
+
+
+
+
+
+ALTER TABLE ml_tbl_user ADD COLUMN `upid` int(11) not null DEFAULT 0  COMMENT '上级id';
+ALTER TABLE ml_tbl_user ADD COLUMN `ctime` datetime default null COMMENT '成为下级时间';
+
+CREATE TABLE `ml_tbl_lottry_rcode` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) DEFAULT NULL,
+  `url` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
