@@ -291,6 +291,9 @@ Route::rule('createSalesmanOrder', 'index/Lottery/createSalesmanOrder');   //  �
 Route::rule('buySalesman', 'index/Lottery/buySalesman');   //  一元购买会员
 Route::rule('lotteryRcode', 'index/Lottery/lotteryRcode');   //  用户二维码
 Route::rule('editShare', 'index/Lottery/editShare');   //  修改分享
+Route::rule('editUserInfo', 'index/Lottery/editUserInfo');   //  修改分享
+Route::rule('getLotteryTotal', 'index/Lottery/getLotteryTotal');   //  修改分享
+Route::rule('openLottery', 'index/Lottery/openLottery');   //  修改分享
 
 
 

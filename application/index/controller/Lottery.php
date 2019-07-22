@@ -33,8 +33,13 @@ class Lottery extends Controller
             return responseError();
         }
         //  活动信息
-        $lottery_info = Db::name('ml_tbl_lottery_info')->where('id',$id)->find();
-
+        $lottery_info = Db::name('ml_tbl_lottery_info')->select();
+        if ($lottery_info){
+            $lottery_info = $lottery_info[0];
+            $lottery_info['lotteryRule'] = str_replace(array("\r\n", "\r", "\n","\t","&nbsp;","</strong>","<strong>"," "), "", $lottery_info['lotteryRule']);
+        }else{
+            $lottery_info = null;
+        }
         $openTime = $lottery_info['openTime'];
         $nowTime = date('Y-m-d H:i:s');
         if ($openTime >= $nowTime){
@@ -60,7 +65,7 @@ class Lottery extends Controller
             $status = 0;
         }
 
-        return responseSuccess(['lottery_info'=>$lottery_info,'list'=>$lottered,'status'=>$status,'lottery_list'=>$lottery_list,'lottery_status'=>$lottey]);
+        return responseSuccess(['lottery_info'=>$lottery_info,'list'=>$lottered,'status'=>$status,'lottery_list'=>$lottery_list,'total'=>count($lottery_list),'lottery_status'=>$lottey]);
     }
 
     public function joinLottery()
@@ -317,6 +322,44 @@ class Lottery extends Controller
     }
 
 
+    public function editUserInfo()
+    {
+        $all = $this->request->param();
+        if (!isset($all['user_id']) || empty($all['user_id'])){
+            return responseError();
+        }
+        $id = $all['user_id'];
+        unset($all['user_id']);
+        $res = Db::name('ml_tbl_user')->where('id',$id)->update($all);
+
+        return responseSuccess();
+    }
+
+
+    public function openLottery()
+    {
+        $total = Db::name('ml_tbl_lottery_record')->select();
+
+        $res = array_rand($total,4);
+
+        foreach ($total as $k=>$v){
+            foreach ($res as $val){
+                if ($val == $k){
+                    Db::name('ml_tbl_lottery_record')->where('id',$v['id'])->update(['result'=>1]);
+                }
+            }
+        }
+
+        return responseSuccess();
+
+    }
+
+    public function getLotteryTotal()
+    {
+        $total = Db::name('ml_tbl_lottery_record')->count();
+
+        return responseSuccess(['total'=>$total]);
+    }
 
 
 
